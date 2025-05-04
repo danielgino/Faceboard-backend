@@ -24,9 +24,9 @@ public class CommentController {
     }
 
 @PostMapping("/add-comment")
-public ResponseEntity<CommentDTO> addComment(@RequestBody Comment comment, HttpServletRequest request) {
+public ResponseEntity<CommentDTO> addComment(@RequestBody Comment comment) {
     try {
-        CommentDTO savedCommentDTO = commentService.addComment(comment, request);
+        CommentDTO savedCommentDTO = commentService.addComment(comment);
         return ResponseEntity.ok(savedCommentDTO);
     } catch (IllegalArgumentException e) {
         return ResponseEntity.status(404).build();

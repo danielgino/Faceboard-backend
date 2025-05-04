@@ -101,19 +101,6 @@ public class FriendshipService {
                 .toList();
     }
 
-    public List<User> getSentFriendRequests(User user) {
-        return friendshipRepository.findAllByUserAndStatus(user, FriendshipStatus.PENDING)
-                .stream()
-                .map(Friends::getFriend)
-                .toList();
-    }
-
-    public List<User> getReceivedFriendRequests(User user) {
-        return friendshipRepository.findAllByFriendAndStatus(user, FriendshipStatus.PENDING)
-                .stream()
-                .map(Friends::getUser)
-                .toList();
-    }
     public void removeFriend(User user, User friend) {
         Optional<Friends> friendship = friendshipRepository.findByUserAndFriend(user, friend);
         friendship.ifPresent(friendshipRepository::delete);

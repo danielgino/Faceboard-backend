@@ -37,15 +37,10 @@ public class CommentService {
         this.notificationService=notificationService;
     }
 
-public CommentDTO addComment(Comment comment, HttpServletRequest request) {
-    String authHeader = request.getHeader("Authorization");
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-        throw new IllegalArgumentException("Missing or invalid Authorization header");
-    }
-    String token = authHeader.substring(7);
-    String username = jwtUtil.extractUsername(token);
+public CommentDTO addComment(Comment comment) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String username = authentication.getName();
     User user = userRepository.findByUserName(username);
-
     if (user == null || comment.getPost() == null) {
         throw new IllegalArgumentException("User or Post not found");
     }

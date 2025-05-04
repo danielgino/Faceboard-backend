@@ -29,5 +29,8 @@ public class CommentDTO {
         this.createdAt = createdAt;
         this.profilePicture = profilePicture;
     }
+    public CommentDTO() {
+
+    }
 
 }

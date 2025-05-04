@@ -72,9 +72,7 @@ public class UserService {
         }
         return null;
     }
-//    public User addUser(User user) {
-//        return userRepository.save(user);
-//    }
+
     public void register(RegisterDTO dto) {
         if (userRepository.findByUserName(dto.getUsername()) != null) {
             throw new RuntimeException("Username already exists");

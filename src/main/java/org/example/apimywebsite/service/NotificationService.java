@@ -38,24 +38,24 @@ public class NotificationService {
     }
 
     public List<NotificationDTO> getMyNotifications(HttpServletRequest request) {
-        User user = authHelper.getUserFromRequest(request);
+        User user = authHelper.getCurrentUser();
         List<Notification> notifications = notificationRepository.findByReceiverIdOrderByCreatedAtDesc(user.getId());
         return notifications.stream().map(this::mapToDTO).toList();
     }
 
     public List<NotificationDTO> getMyUnreadNotifications(HttpServletRequest request) {
-        User user = authHelper.getUserFromRequest(request);
+        User user = authHelper.getCurrentUser();
         List<Notification> notifications = notificationRepository.findByReceiverIdAndReadFalseOrderByCreatedAtDesc(user.getId());
         return notifications.stream().map(this::mapToDTO).toList();
     }
 
     public long countMyUnreadNotifications(HttpServletRequest request) {
-        User user = authHelper.getUserFromRequest(request);
+        User user = authHelper.getCurrentUser();
         return notificationRepository.countByReceiverIdAndReadFalse(user.getId());
     }
 
     public void markMyNotificationsAsRead(HttpServletRequest request) {
-        User user = authHelper.getUserFromRequest(request);
+        User user = authHelper.getCurrentUser();
         List<Notification> notifications = notificationRepository.findByReceiverIdAndReadFalseOrderByCreatedAtDesc(user.getId());
         for (Notification n : notifications) {
             n.setRead(true);
