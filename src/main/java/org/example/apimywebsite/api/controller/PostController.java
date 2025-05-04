@@ -39,16 +39,10 @@ public class PostController {
     public ResponseEntity<List<PostDTO>> getPostByUser(
             @RequestParam long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            HttpServletRequest request
+            @RequestParam(defaultValue = "10") int size
     ) {
         try {
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            List<PostDTO> posts = postService.getPostsByUserDTO(userId, authHeader, page, size);
+            List<PostDTO> posts = postService.getPostsByUserDTO(userId, page, size);
             return ResponseEntity.ok(posts);
 
         } catch (Exception e) {
@@ -58,27 +52,20 @@ public class PostController {
     }
     @GetMapping("/{userId}/all-post-images")
     public ResponseEntity<List<String>> getUserPostImages(
-            @PathVariable int userId,
-            @RequestHeader("Authorization") String authHeader
-    ) {
-        List<String> imageUrls = postService.getAllPostImageUrlsByUserId(userId, authHeader);
+            @PathVariable int userId) {
+        List<String> imageUrls = postService.getAllPostImageUrlsByUserId(userId);
         return ResponseEntity.ok(imageUrls);
     }
 
 
 @GetMapping("/feed")
 public ResponseEntity<List<PostDTO>> getPostToFeed(
-        HttpServletRequest request,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size
+        @RequestParam(defaultValue = "5") int size
 ) {
     try {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
-        List<PostDTO> posts = postService.getFeedPosts(authHeader, page, size);
+        List<PostDTO> posts = postService.getFeedPosts( page, size);
         return ResponseEntity.ok(posts);
 
     } catch (Exception e) {
@@ -90,13 +77,8 @@ public ResponseEntity<List<PostDTO>> getPostToFeed(
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostDTO> addPost(
             @RequestParam("postText") String postText,
-            @RequestParam(value = "files", required = false) List<MultipartFile> files,
-            HttpServletRequest request) {
+            @RequestParam(value = "files", required = false) List<MultipartFile> files) {
         try {
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
             List<String> imageUrls = new ArrayList<>();
 
             if (files != null && files.size() > 4) {
@@ -118,7 +100,7 @@ public ResponseEntity<List<PostDTO>> getPostToFeed(
             Post post = new Post();
             post.setPostText(postText);
 
-            PostDTO postDTO = postService.addPost(post, authHeader, imageUrls);
+            PostDTO postDTO = postService.addPost(post, imageUrls);
 
             return ResponseEntity.ok(postDTO);
 
@@ -138,13 +120,13 @@ public ResponseEntity<List<PostDTO>> getPostToFeed(
 
     @DeleteMapping("/delete/{postId}")
     public ResponseEntity<?> deletePost(@PathVariable long postId, @RequestHeader("Authorization") String authHeader) {
-        postService.deletePost(postId, authHeader);
+        postService.deletePost(postId);
 
         return ResponseEntity.ok().build();
     }
     @PutMapping("/edit/{postId}")
-    public ResponseEntity<PostDTO> editPost(@PathVariable long postId, @RequestBody EditPostRequestDTO request, @RequestHeader("Authorization") String authHeader) {
-        PostDTO updatedPost = postService.editPost(postId, request.getContent(), authHeader);
+    public ResponseEntity<PostDTO> editPost(@PathVariable long postId, @RequestBody EditPostRequestDTO request) {
+        PostDTO updatedPost = postService.editPost(postId, request.getContent());
         return ResponseEntity.ok(updatedPost);
     }
 }

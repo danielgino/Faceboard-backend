@@ -16,6 +16,7 @@ public class JwtUtil {
 //    private final SecretKey secretKey = Keys.hmacShaKeyFor(SECRET.getBytes());
 private final SecretKey secretKey;
 
+///PRODCTIOUN
     public JwtUtil() {
         String secret = System.getenv("JWT_SECRET");
         if (secret == null) {
@@ -23,6 +24,21 @@ private final SecretKey secretKey;
         }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
     }
+
+
+
+//LOCALHOST
+//    public JwtUtil() {
+//        // נסה לקרוא מהסביבה, ואם לא קיים - ברירת מחדל לפיתוח מקומי
+//        String secret = System.getenv("JWT_SECRET");
+//
+//        if (secret == null || secret.isBlank()) {
+//            System.out.println("⚠️ JWT_SECRET not found in environment. Using default development key.");
+//            secret = "localDevSecretKeyThatIsLongEnoughForHMAC256_123456789";
+//        }
+//
+//        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+//    }
 
     public String generateToken(String username) {
         return Jwts.builder()

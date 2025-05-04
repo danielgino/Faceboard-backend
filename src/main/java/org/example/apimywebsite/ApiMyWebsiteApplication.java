@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class ApiMyWebsiteApplication {
 
     public static void main(String[] args) {
-
+//LOCALHOST
 //        Dotenv dotenv = Dotenv.load();
 //        System.setProperty("DB_URL", dotenv.get("DB_URL"));
 //        System.setProperty("DB_USERNAME", dotenv.get("DB_USERNAME"));
