@@ -13,15 +13,21 @@ public class CloudinaryService {
 
     private final Cloudinary cloudinary;
 
-    public CloudinaryService() {
-        this.cloudinary = new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", System.getProperty("CLOUDINARY_NAME"),
-                "api_key", System.getProperty("CLOUDINARY_API_KEY"),
-                "api_secret", System.getProperty("CLOUDINARY_API_SECRET")
-//                "secure", true
-        ));
-    }
-
+//    public CloudinaryService() {
+//        this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+//                "cloud_name", System.getProperty("CLOUDINARY_NAME"),
+//                "api_key", System.getProperty("CLOUDINARY_API_KEY"),
+//                "api_secret", System.getProperty("CLOUDINARY_API_SECRET")
+////    check            "secure", true
+//        ));
+//    }
+public CloudinaryService() {
+    this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+            "cloud_name", System.getenv("CLOUDINARY_NAME"),
+            "api_key", System.getenv("CLOUDINARY_API_KEY"),
+            "api_secret", System.getenv("CLOUDINARY_API_SECRET")
+    ));
+}
     public String uploadImage(MultipartFile file) throws IOException {
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
         return uploadResult.get("url").toString();
