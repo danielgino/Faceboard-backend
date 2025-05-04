@@ -17,7 +17,7 @@ public class JwtUtil {
 private final SecretKey secretKey;
 
     public JwtUtil() {
-        String secret = System.getProperty("JWT_SECRET");
+        String secret = System.getenv("JWT_SECRET");
         if (secret == null) {
             throw new RuntimeException("JWT_SECRET not found in system properties");
         }
