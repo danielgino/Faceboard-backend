@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class ApiMyWebsiteApplication {
 
     public static void main(String[] args) {
+        System.out.println("🚀 Starting ApiMyWebsiteApplication...");
+
 //LOCALHOST
 //        Dotenv dotenv = Dotenv.load();
 //        System.setProperty("DB_URL", dotenv.get("DB_URL"));
@@ -22,6 +24,8 @@ public class ApiMyWebsiteApplication {
 //        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
 
         SpringApplication.run(ApiMyWebsiteApplication.class, args);
+        System.out.println("✅ Application started!"); // האם אתה רואה את זה?
+
     }
 
 }
