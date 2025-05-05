@@ -7,7 +7,9 @@ import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -23,17 +25,16 @@ public class Post {
     @Column(name = "post_content")
     private String postText;
     private LocalDateTime createdAt;
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    private List<Like> likes;
 
+//
 //    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-//    private List<Comment> comments;
-//    // Getters & Setters
-//    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<PostImage> images = new ArrayList<>();
-@BatchSize(size = 16)
-@OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
-private List<PostImage> images;
+//    private List<Like> likes;
+@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+@BatchSize(size = 20)
+private Set<Like> likes = new HashSet<>();
+  @BatchSize(size = 16)
+  @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
+   private List<PostImage> images;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
