@@ -6,10 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Setter
 @Getter
@@ -26,19 +23,17 @@ public class Post {
     private String postText;
     private LocalDateTime createdAt;
 
-//
-//    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-//    private List<Like> likes;
-@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-@BatchSize(size = 20)
-private Set<Like> likes = new HashSet<>();
-  @BatchSize(size = 16)
-  @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
-   private List<PostImage> images;
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 20)
-    private List<Comment> comments = new ArrayList<>();
+    private Set<Like> likes = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 16)
+    private Set<PostImage> images = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdAt ASC")
+    @BatchSize(size = 20)
+    private Set<Comment> comments = new LinkedHashSet<>();
 
     @Column(nullable = false)
     private boolean edited = false;

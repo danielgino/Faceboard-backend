@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class CommentService {
@@ -37,7 +38,22 @@ public class CommentService {
         this.notificationService=notificationService;
     }
 
-public CommentDTO addComment(Comment comment) {
+    public List<CommentDTO> getCommentsByPostId(Long postId) {
+        List<Comment> comments = commentRepository.findCommentsByPostIdWithUser(postId);
+
+        return comments.stream().map(comment -> new CommentDTO(
+                comment.getCommentId(),
+                comment.getUser().getId(),
+                comment.getUser().getFullName(),
+                comment.getUser().getUserName(),
+                comment.getText(),
+                comment.getCreatedAt(),
+                comment.getUser().getProfilePictureUrl()
+        )).toList();
+    }
+
+
+    public CommentDTO addComment(Comment comment) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String username = authentication.getName();
     User user = userRepository.findByUserName(username);

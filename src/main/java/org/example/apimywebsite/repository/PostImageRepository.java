@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface PostImageRepository extends JpaRepository<PostImage,Long> {
 
-    @Query("SELECT i FROM PostImage i WHERE i.post.postId IN :postIds")
-    List<PostImage> findByPostIds(@Param("postIds") List<Long> postIds);
+    @Query("SELECT pi.imageUrl FROM PostImage pi WHERE pi.post.user.id = :userId")
+    List<String> findImageUrlsByUserId(@Param("userId") int userId);
 
 }

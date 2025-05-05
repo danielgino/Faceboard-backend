@@ -30,6 +30,9 @@ public class PostService {
     private final PostRepository postRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+
+    private final LikeRepository likeRepository;
+    private final  CommentRepository commentRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final PostImageRepository postImageRepository;
     private final AuthHelper authHelper;
@@ -37,8 +40,10 @@ public class PostService {
     private final PostMapper postMapper;
 
     @Autowired
-    public PostService(PostRepository postRepository,JwtUtil jwtUtil,UserRepository userRepository,SimpMessagingTemplate messagingTemplate,PostImageRepository postImageRepository,AuthHelper authHelper,NotificationRepository notificationRepository,PostMapper postMapper) {
+    public PostService(PostRepository postRepository,LikeRepository likeRepository,CommentRepository commentRepository,JwtUtil jwtUtil,UserRepository userRepository,SimpMessagingTemplate messagingTemplate,PostImageRepository postImageRepository,AuthHelper authHelper,NotificationRepository notificationRepository,PostMapper postMapper) {
         this.postRepository = postRepository;
+        this.likeRepository=likeRepository;
+        this.commentRepository=commentRepository;
         this.jwtUtil=jwtUtil;
         this.userRepository=userRepository;
         this.messagingTemplate=messagingTemplate;
@@ -140,8 +145,8 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
             })
             .toList();
     postImageRepository.saveAll(images);
-    post.setImages(images);
-    PostDTO postDTO = postMapper.toDto(post, user.getId());
+    post.setImages(new HashSet<>(images));
+    PostDTO postDTO = postMapper.toDto(post, user.getId(), 0, 0); // ← 👈 אין לייקים ותגובות עדיין
     messagingTemplate.convertAndSend("/topic/posts", postDTO);
     return postDTO;
 }
@@ -160,8 +165,13 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
         Pageable pageable = PageRequest.of(page, size);
         List<Post> posts = postRepository.findAllPostsWithImages(userIds, pageable);
         return posts.stream()
-                .map(post -> postMapper.toDto(post, currentUser.getId()))
+                .map(post -> {
+                    int likeCount = likeRepository.countLikesByPostId(post.getPostId());
+                    int commentCount = commentRepository.countCommentsByPostId(post.getPostId());
+                    return postMapper.toDto(post, currentUser.getId(), likeCount, commentCount);
+                })
                 .toList();
+
     }
 
 
@@ -179,7 +189,11 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
         Pageable pageable = PageRequest.of(page, size);
         List<Post> posts = postRepository.findAllPostsWithImagesByUserId(userId, pageable);
         return posts.stream()
-                .map(post -> postMapper.toDto(post, currentUser.getId()))
+                .map(post -> {
+                    int likeCount = likeRepository.countLikesByPostId(post.getPostId());
+                    int commentCount = commentRepository.countCommentsByPostId(post.getPostId());
+                    return postMapper.toDto(post, currentUser.getId(), likeCount, commentCount);
+                })
                 .toList();
     }
 
@@ -194,12 +208,13 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
         if (post.getUser().getId() != currentUser.getId()) {
             throw new RuntimeException("You are not authorized to edit this post");
         }
-
         post.setPostText(newContent);
         post.setEdited(true);
         postRepository.save(post);
+        int likeCount = 0;
+        int commentCount = 0;
+        return postMapper.toDto(post, currentUser.getId(), likeCount, commentCount);
 
-        return postMapper.toDto(post, currentUser.getId());
     }
 
     public List<Post> getPostsByUserId(long userId) {
