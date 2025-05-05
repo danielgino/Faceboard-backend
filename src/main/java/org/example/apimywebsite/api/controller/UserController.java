@@ -104,16 +104,7 @@ public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto) {
         }
         return ResponseEntity.ok(userDTOs);
     }
-    @GetMapping("/lastname")
-    public ResponseEntity<User> getUserByLastName(@RequestParam String lastname) {
-        User user = userService.findByLastName(lastname);
 
-        if (user != null) {
-            return ResponseEntity.ok(user);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
     @GetMapping("/by-id")
     public ResponseEntity<UserDTO> getUserDTOById(@RequestParam int id) {
         UserDTO userDTO =userService.getUserDTOById(id);

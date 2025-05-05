@@ -16,7 +16,7 @@ public class JwtUtil {
 //    private final SecretKey secretKey = Keys.hmacShaKeyFor(SECRET.getBytes());
 private final SecretKey secretKey;
 
-///PRODCTIOUN
+//PRODUCTION
     public JwtUtil() {
         String secret = System.getenv("JWT_SECRET");
         if (secret == null) {

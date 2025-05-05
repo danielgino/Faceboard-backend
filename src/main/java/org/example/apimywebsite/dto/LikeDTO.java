@@ -24,6 +24,9 @@ public class LikeDTO {
         this.profilePictureUrl = profilePictureUrl;
         this.username =userName;
     }
+    public LikeDTO(){
+
+    }
     public Integer getUserId() {
         return userId;
     }

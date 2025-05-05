@@ -6,6 +6,7 @@ import org.example.apimywebsite.api.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,5 +30,22 @@ public interface MessageRepository extends JpaRepository<Message, Integer> {
 """)
     List<Message> findConversationBetweenUsers(int userId, int otherUserId);
     List<Message> findBySenderIdAndReceiverIdAndIsReadFalse(int senderId, int receiverId);
+    @Query("""
+    SELECT m FROM Message m
+    WHERE (m.sender.id = :userId AND m.receiver.id IN :friendIds)
+       OR (m.receiver.id = :userId AND m.sender.id IN :friendIds)
+    AND m.sentTime IN (
+        SELECT MAX(m2.sentTime) FROM Message m2
+        WHERE 
+            ((m2.sender.id = :userId AND m2.receiver.id IN :friendIds)
+             OR (m2.receiver.id = :userId AND m2.sender.id IN :friendIds))
+        GROUP BY 
+            CASE 
+                WHEN m2.sender.id < m2.receiver.id THEN CONCAT(m2.sender.id, '-', m2.receiver.id)
+                ELSE CONCAT(m2.receiver.id, '-', m2.sender.id)
+            END
+    )
+""")
+    List<Message> findLastMessagesBetweenUserAndFriends(@Param("userId") int userId, @Param("friendIds") List<Integer> friendIds);
 
 }

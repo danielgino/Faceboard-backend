@@ -6,6 +6,7 @@ import org.example.apimywebsite.api.model.Like;
 import org.example.apimywebsite.api.model.Post;
 import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.dto.CommentDTO;
+import org.example.apimywebsite.dto.LikeDTO;
 import org.example.apimywebsite.repository.LikeRepository;
 import org.example.apimywebsite.repository.PostRepository;
 import org.example.apimywebsite.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class LikeService {
@@ -22,6 +24,7 @@ public class LikeService {
     private final JwtUtil jwtUtil;
     private final NotificationService notificationService;
     private final PostRepository postRepository;
+
 
     public LikeService(LikeRepository likeRepository,PostRepository postRepository,JwtUtil jwtUtil,UserRepository userRepository,NotificationService notificationService){
         this.likeRepository=likeRepository;
@@ -41,6 +44,18 @@ public class LikeService {
         like.setCreatedAt(LocalDateTime.now());
         likeRepository.save(like);
 
+    }
+    public List<LikeDTO> getUserLikesByPostId(Long postId) {
+        List<Like> likes = likeRepository.findByPostIdWithUser(postId);
+
+        return likes.stream().map(like -> {
+            LikeDTO dto = new LikeDTO();
+            dto.setUserId(like.getUser().getId());
+            dto.setUsername(like.getUser().getUserName());
+            dto.setFullName(like.getUser().getFullName());
+            dto.setProfilePictureUrl(like.getUser().getProfilePictureUrl());
+            return dto;
+        }).toList();
     }
 
 @Transactional

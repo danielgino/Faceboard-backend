@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @RestController
 @RequestMapping("/comments")
 public class CommentController {
@@ -21,6 +23,10 @@ public class CommentController {
     @Autowired
     public CommentController(CommentService commentService) {
         this.commentService = commentService;
+    }
+    @GetMapping("/post/{postId}")
+    public ResponseEntity<List<CommentDTO>> getCommentsForPost(@PathVariable Long postId) {
+        return ResponseEntity.ok(commentService.getCommentsByPostId(postId));
     }
 
 @PostMapping("/add-comment")

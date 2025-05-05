@@ -5,6 +5,7 @@ import org.example.apimywebsite.api.model.Comment;
 import org.example.apimywebsite.api.model.Like;
 import org.example.apimywebsite.api.model.Post;
 import org.example.apimywebsite.api.model.User;
+import org.example.apimywebsite.dto.LikeDTO;
 import org.example.apimywebsite.repository.LikeRepository;
 import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.LikeService;
@@ -12,10 +13,9 @@ import org.example.apimywebsite.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/likes")
@@ -40,5 +40,11 @@ public class LikeController {
             return ResponseEntity.status(500).body(" Something went wrong like error");
         }
     }
+
+    @GetMapping("/post/{postId}")
+    public ResponseEntity<List<LikeDTO>> getLikesForPost(@PathVariable Long postId) {
+        return ResponseEntity.ok(likeService.getUserLikesByPostId(postId));
+    }
+
 
 }
