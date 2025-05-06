@@ -98,7 +98,7 @@ public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO dto) {
 
     @GetMapping("/name")
     public ResponseEntity<List<UserDTO>> getUsersByName(@RequestParam String name) {
-        List<UserDTO> userDTOs = userService.findUsersByName(name);
+        List<UserDTO> userDTOs = userService.findUsersByFullName(name);
         if (userDTOs.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
