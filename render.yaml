@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: faceboard-backend
+    env: java
+    buildCommand: ./mvnw clean install -DskipTests
+    startCommand: java -Xmx512m -Xms256m -jar target/ApiMyWebsite-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: CLOUDINARY_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false

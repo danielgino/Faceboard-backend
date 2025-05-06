@@ -29,7 +29,6 @@ private final SecretKey secretKey;
 
 //LOCALHOST
 //    public JwtUtil() {
-//        // נסה לקרוא מהסביבה, ואם לא קיים - ברירת מחדל לפיתוח מקומי
 //        String secret = System.getenv("JWT_SECRET");
 //
 //        if (secret == null || secret.isBlank()) {
