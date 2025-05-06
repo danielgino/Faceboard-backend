@@ -17,7 +17,6 @@ public class ApiMyWebsiteApplication {
 //        System.out.println("🔍 DB_NAME = " + System.getenv("DB_NAME"));
 //        System.out.println("🔍 DB_USERNAME = " + System.getenv("DB_USERNAME"));
 //        System.out.println("🔍 DB_PASSWORD = " + System.getenv("DB_PASSWORD"));
-//        System.out.println("🔍 CLOUDINARY_NAME = " + System.getenv("CLOUDINARY_NAME"));
 //        System.out.println("🔍 CLOUDINARY_API_KEY = " + System.getenv("CLOUDINARY_API_KEY"));
 //        System.out.println("🔍 CLOUDINARY_API_SECRET present = " + (System.getenv("CLOUDINARY_API_SECRET") != null));
 
