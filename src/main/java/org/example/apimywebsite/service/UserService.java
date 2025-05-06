@@ -166,18 +166,12 @@ public class UserService {
 
         List<User> friends = friendshipService.getAcceptedFriends(user);
         List<Integer> friendIds = friends.stream().map(User::getId).toList();
-
-        // שואלים את כל ההודעות האחרונות בשאילתה אחת
         List<Message> lastMessages = messageRepository.findLastMessagesBetweenUserAndFriends(id, friendIds);
-
-        // ממפים לפי ID של החבר השני בשיחה
         Map<Integer, Message> messageMap = new HashMap<>();
         for (Message msg : lastMessages) {
             int otherId = (msg.getSender().getId() == id) ? msg.getReceiver().getId() : msg.getSender().getId();
             messageMap.put(otherId, msg);
         }
-
-        // יוצרים את רשימת FriendDTO
         List<FriendDTO> friendsDTO = new ArrayList<>();
         for (User friend : friends) {
             Message message = messageMap.get(friend.getId());
@@ -207,6 +201,14 @@ public class UserService {
     public User findByUserName(String userName) {
         return userRepository.findByUserName(userName);
     }
+public List<UserDTO> findUsersByFullName(String name) {
+    List<User> users = userRepository.searchByFullName(name.trim());
+    return users.stream()
+            .map(userMapper::toUserDTO)
+            .toList();
+}
+
+
 
     public User save(User user) {
         return userRepository.save(user);
