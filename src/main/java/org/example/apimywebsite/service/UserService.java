@@ -81,8 +81,8 @@ public class UserService {
         User user = new User();
         user.setUserName(dto.getUsername());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        user.setName(dto.getName());
-        user.setLastname(dto.getLastname());
+        user.setName(capitalize(dto.getName()));
+        user.setLastname(capitalize(dto.getLastname()));
         user.setEmail(dto.getEmail());
         user.setBirthDate(dto.getBirthDate());
         user.setGender(dto.getGender());
@@ -101,6 +101,7 @@ public class UserService {
     public UserDTO updateUserDetails(int userId, UpdateUserDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        System.out.println("🔍 DTO Received: " + dto);
 
         if (dto.getNewPassword() != null && dto.getCurrentPassword() != null) {
             if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
@@ -114,8 +115,8 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is required");
         }
 
-        if (dto.getName() != null) user.setName(dto.getName());
-        if (dto.getLastname() != null) user.setLastname(dto.getLastname());
+        if (dto.getName() != null) user.setName(capitalize(dto.getName()));
+        if (dto.getLastname() != null) user.setLastname(capitalize(dto.getLastname()));
         if (dto.getGender() != null) user.setGender(dto.getGender());
         if (dto.getBio() != null) user.setBio(dto.getBio());
         if (dto.getFacebookUrl() != null) user.setFacebookUrl(dto.getFacebookUrl());
@@ -208,6 +209,13 @@ public List<UserDTO> findUsersByFullName(String name) {
             .toList();
 }
 
+    private String capitalize(String input) {
+        if (input == null || input.isBlank()) return input;
+        return Arrays.stream(input.trim().toLowerCase().split(" "))
+                .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1))
+                .reduce((a, b) -> a + " " + b)
+                .orElse("");
+    }
 
 
     public User save(User user) {

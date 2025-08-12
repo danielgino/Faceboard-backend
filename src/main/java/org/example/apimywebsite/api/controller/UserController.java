@@ -49,8 +49,9 @@ public class UserController {
     public ResponseEntity<UserDTO> updateProfile(
             @Valid  @RequestBody UpdateUserDTO dto) {
 
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+        User user = userService.findByUserName(username);
         UserDTO updatedUser = userService.updateUserDetails(user.getId(), dto);
         return ResponseEntity.ok(updatedUser);
     }

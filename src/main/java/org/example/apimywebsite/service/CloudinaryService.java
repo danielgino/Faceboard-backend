@@ -57,7 +57,6 @@ public CloudinaryService(
         @Value("${cloudinary.key}") String apiKey,
         @Value("${cloudinary.secret}") String apiSecret
 ) {
-    System.out.println("✅ Spring loaded Cloudinary config: " + cloudName);
     this.cloudinary = new Cloudinary(ObjectUtils.asMap(
             "cloud_name", cloudName,
             "api_key", apiKey,

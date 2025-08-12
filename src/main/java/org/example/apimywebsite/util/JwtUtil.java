@@ -17,27 +17,27 @@ public class JwtUtil {
 private final SecretKey secretKey;
 
 //PRODUCTION
-    public JwtUtil() {
-        String secret = System.getenv("JWT_SECRET");
-        if (secret == null) {
-            throw new RuntimeException("JWT_SECRET not found in system properties");
-        }
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
-    }
+//    public JwtUtil() {
+//        String secret = System.getenv("JWT_SECRET");
+//        if (secret == null) {
+//            throw new RuntimeException("JWT_SECRET not found in system properties");
+//        }
+//        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+//    }
 
 
 
 //LOCALHOST
-//    public JwtUtil() {
-//        String secret = System.getenv("JWT_SECRET");
-//
-//        if (secret == null || secret.isBlank()) {
-//            System.out.println("⚠️ JWT_SECRET not found in environment. Using default development key.");
-//            secret = "localDevSecretKeyThatIsLongEnoughForHMAC256_123456789";
-//        }
-//
-//        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
-//    }
+    public JwtUtil() {
+        String secret = System.getenv("JWT_SECRET");
+
+        if (secret == null || secret.isBlank()) {
+            System.out.println("⚠️ JWT_SECRET not found in environment. Using default development key.");
+            secret = "localDevSecretKeyThatIsLongEnoughForHMAC256_123456789";
+        }
+
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     public String generateToken(String username) {
         return Jwts.builder()
