@@ -31,7 +31,7 @@ public class ApiMyWebsiteApplication {
 //        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
 
         SpringApplication.run(ApiMyWebsiteApplication.class, args);
-        System.out.println("✅ Application started!"); // האם אתה רואה את זה?
+        System.out.println("✅ Application started!");
 
     }
 
