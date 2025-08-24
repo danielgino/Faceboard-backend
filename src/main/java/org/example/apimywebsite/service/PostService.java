@@ -11,7 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +45,7 @@ public class PostService {
 public PostDTO addPost(Post post, List<String> imageUrls) {
     User user = authHelper.getCurrentUser();
     post.setUser(user);
-    post.setCreatedAt(LocalDateTime.now());
+    post.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
     postRepository.save(post);
     List<PostImage> images = imageUrls.stream()
             .map(url -> {
@@ -87,7 +88,6 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
 
 
     public List<String> getAllPostImageUrlsByUserId(int userId) {
-        User currentUser = authHelper.getCurrentUser();
         List<Post> posts = getPostsByUserId(userId);
         return posts.stream()
                 .flatMap(post -> post.getImages().stream())

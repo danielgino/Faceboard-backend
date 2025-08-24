@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -60,7 +62,7 @@ public class CommentService {
     Post post = postRepository.findById(postId)
             .orElseThrow(() -> new IllegalArgumentException("Post not found"));
     comment.setUser(user);
-    comment.setCreatedAt(LocalDateTime.now());
+    comment.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));;
     Comment savedComment = commentRepository.save(comment);
 
     User postOwner = post.getUser();

@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Setter
@@ -21,7 +22,9 @@ public class Post {
     private User user;
     @Column(name = "post_content")
     private String postText;
-    private LocalDateTime createdAt;
+
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 20)
