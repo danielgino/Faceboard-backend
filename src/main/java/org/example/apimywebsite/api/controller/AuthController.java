@@ -1,15 +1,17 @@
 package org.example.apimywebsite.api.controller;
 
 import org.example.apimywebsite.api.model.User;
-import org.example.apimywebsite.dto.LoginRequest;
+import org.example.apimywebsite.dto.LoginRequestDTO;
+import org.example.apimywebsite.dto.PasswordResetDTO;
 import org.example.apimywebsite.dto.UserDTO;
+import org.example.apimywebsite.service.PasswordResetService;
 import org.example.apimywebsite.service.UserService;
 import org.example.apimywebsite.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.server.ResponseStatusException;
 
 
 @RestController
@@ -22,9 +24,10 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
-
+    @Autowired
+    private PasswordResetService passwordResetService;
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
         System.out.println("✅ login() called");
         System.out.println("Username: " + loginRequest.getUserName());
         System.out.println("Password: " + loginRequest.getPassword());
@@ -59,6 +62,25 @@ public class AuthController {
         return ResponseEntity.ok(userDTO);
 
     }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgot(@RequestBody PasswordResetDTO dto) {
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+        }
+        passwordResetService.requestReset(dto.getEmail());
+        return ResponseEntity.ok().build();
+    }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> reset(@RequestBody PasswordResetDTO dto) {
+        if (dto.getToken() == null || dto.getToken().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token is required");
+        }
+        if (dto.getNewPassword() == null || dto.getNewPassword().length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
+        }
+        passwordResetService.resetPassword(dto.getToken(), dto.getNewPassword());
+        return ResponseEntity.noContent().build();
+    }
 
 }

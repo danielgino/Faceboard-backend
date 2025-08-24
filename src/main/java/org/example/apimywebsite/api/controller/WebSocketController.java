@@ -25,7 +25,6 @@ public class WebSocketController {
     @MessageMapping("/sendMessage")
     public void handleMessage(@Payload MessageDTO messageDTO, Principal principal) {
         String username = principal.getName();
-        System.out.println("📢 Authenticated WebSocket user: " + username);
         int senderId = userService.getUserIdByUsername(username);
         MessageDTO saved = messageService.sendMessage(
                 senderId,
@@ -38,29 +37,21 @@ public class WebSocketController {
 
     @MessageMapping("/markAsRead")
     public void handleMarkAsRead(@Payload MarkAsReadDTO dto) {
-        System.out.println("📨 Marking messages as read from " + dto.getSenderId() + " to " + dto.getReceiverId());
-
         messageService.markMessagesAsRead(dto.getSenderId(), dto.getReceiverId());
         messagingTemplate.convertAndSend(
                 "/topic/message-read/" + dto.getSenderId(),
                 "read_by:" + dto.getReceiverId()
         );
-
-        System.out.println("✅ Messages marked as read and notification sent.");
     }
 
 
 
     @MessageMapping("/activeChat")
     public void updateActiveChat(@Payload ChatStatusUpdate update) {
-        System.out.println("💬 Updating active chat: " + update.getUserId() + " chatting with " + update.getChattingWith());
-
         if (update.getChattingWith() != null) {
             ActiveChatTracker.setActiveChat(update.getUserId(), update.getChattingWith());
         } else {
             ActiveChatTracker.removeActiveChat(update.getUserId());
-            System.out.println("🧹 Removed user " + update.getUserId() + " from active chat");
-
         }
     }
 
@@ -68,7 +59,6 @@ public class WebSocketController {
         private Integer userId;
         private Integer chattingWith;
 
-        // גטטרים סטטרים חובה אם לא משתמש ב-Lombok
         public Integer getUserId() { return userId; }
         public void setUserId(Integer userId) { this.userId = userId; }
         public Integer getChattingWith() { return chattingWith; }

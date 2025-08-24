@@ -1,6 +1,5 @@
 package org.example.apimywebsite.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.example.apimywebsite.api.model.Comment;
 import org.example.apimywebsite.api.model.Post;
 import org.example.apimywebsite.api.model.User;
@@ -8,13 +7,11 @@ import org.example.apimywebsite.dto.CommentDTO;
 import org.example.apimywebsite.repository.CommentRepository;
 import org.example.apimywebsite.repository.PostRepository;
 import org.example.apimywebsite.repository.UserRepository;
-import org.example.apimywebsite.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -24,16 +21,15 @@ import java.util.List;
 public class CommentService {
     private  CommentRepository commentRepository;
     private UserRepository userRepository;
-    private JwtUtil jwtUtil;
+
     @Autowired
     private PostRepository postRepository;
 
     private NotificationService notificationService;
 
-    public CommentService(CommentRepository commentRepository, UserRepository userRepository, JwtUtil jwtUtil,PostRepository postRepository,NotificationService notificationService) {
+    public CommentService(CommentRepository commentRepository, UserRepository userRepository,PostRepository postRepository,NotificationService notificationService) {
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
         this.postRepository=postRepository;
         this.notificationService=notificationService;
     }

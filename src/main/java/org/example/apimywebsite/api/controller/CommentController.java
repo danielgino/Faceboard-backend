@@ -1,18 +1,11 @@
 package org.example.apimywebsite.api.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.example.apimywebsite.api.model.Comment;
-import org.example.apimywebsite.api.model.Post;
-import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.dto.CommentDTO;
-import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.CommentService;
-import org.example.apimywebsite.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController

@@ -3,6 +3,7 @@ package org.example.apimywebsite.api.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.apimywebsite.enums.FriendshipStatus;
 
 import java.time.LocalDateTime;
 

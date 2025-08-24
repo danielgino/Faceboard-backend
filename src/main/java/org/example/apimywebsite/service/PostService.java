@@ -2,35 +2,25 @@ package org.example.apimywebsite.service;
 
 import jakarta.transaction.Transactional;
 import org.example.apimywebsite.api.model.*;
-
-import org.example.apimywebsite.dto.CommentDTO;
-import org.example.apimywebsite.dto.LikeDTO;
 import org.example.apimywebsite.dto.PostDTO;
-import org.example.apimywebsite.dto.PostImageDTO;
 import org.example.apimywebsite.mapper.PostMapper;
 import org.example.apimywebsite.repository.*;
 import org.example.apimywebsite.util.AuthHelper;
-import org.example.apimywebsite.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class PostService {
 
     private final PostRepository postRepository;
-    private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
-
     private final LikeRepository likeRepository;
     private final  CommentRepository commentRepository;
     private final SimpMessagingTemplate messagingTemplate;
@@ -40,12 +30,10 @@ public class PostService {
     private final PostMapper postMapper;
 
     @Autowired
-    public PostService(PostRepository postRepository,LikeRepository likeRepository,CommentRepository commentRepository,JwtUtil jwtUtil,UserRepository userRepository,SimpMessagingTemplate messagingTemplate,PostImageRepository postImageRepository,AuthHelper authHelper,NotificationRepository notificationRepository,PostMapper postMapper) {
+    public PostService(PostRepository postRepository,LikeRepository likeRepository,CommentRepository commentRepository,SimpMessagingTemplate messagingTemplate,PostImageRepository postImageRepository,AuthHelper authHelper,NotificationRepository notificationRepository,PostMapper postMapper) {
         this.postRepository = postRepository;
         this.likeRepository=likeRepository;
         this.commentRepository=commentRepository;
-        this.jwtUtil=jwtUtil;
-        this.userRepository=userRepository;
         this.messagingTemplate=messagingTemplate;
         this.postImageRepository=postImageRepository;
         this.authHelper=authHelper;
@@ -53,84 +41,6 @@ public class PostService {
         this.postMapper=postMapper;
     }
 
-
-//    public PostDTO addPost(Post post, String authHeader,List<String> imageUrls) {
-//        String token = authHeader.substring(7);
-//        String username = jwtUtil.extractUsername(token);
-//        User user = userRepository.findByUserName(username);
-//        if (user == null) {
-//            throw new RuntimeException("User not found");
-//        }
-//        post.setUser(user);
-//        post.setCreatedAt(LocalDateTime.now());
-//        postRepository.save(post);
-//
-//        List<PostImage> images = new ArrayList<>();
-//        if (imageUrls != null && !imageUrls.isEmpty()) {
-//            for (String url : imageUrls) {
-//                PostImage image = new PostImage();
-//                image.setPost(post);
-//                image.setImageUrl(url);
-//                postImageRepository.save(image);
-//                images.add(image);
-//            }
-//        }
-//
-//        post.getImages().addAll(images);
-//
-//        postRepository.save(post);
-//        int likeCount = post.getLikes() != null ? post.getLikes().size() : 0;
-//        String fullName = post.getUser().getFullName();
-//
-//        List<LikeDTO> likedUsers = new ArrayList<>();
-//        if (post.getLikes() != null) {
-//            for (Like like : post.getLikes()) {
-//                User likedUser = like.getUser();
-//                likedUsers.add(new LikeDTO(
-//                        likedUser.getId(),
-//                        likedUser.getFullName(),
-//                        likedUser.getUserName(),
-//                        likedUser.getProfilePictureUrl()
-//                ));
-//            }
-//        }
-//        List<CommentDTO> comments = new ArrayList<>();
-//        if (post.getComments() != null) {
-//            for (Comment comment : post.getComments()) {
-//                CommentDTO commentDTO = new CommentDTO(
-//                        comment.getCommentId(),
-//                        comment.getUser().getId(),
-//                        comment.getUser().getFullName(),
-//                        comment.getUser().getUserName(),
-//                        comment.getText(),
-//                        comment.getCreatedAt(),
-//                        comment.getUser().getProfilePictureUrl()
-//                );
-//                comments.add(commentDTO);
-//            }
-//        }
-//
-//        PostDTO postDTO = new PostDTO(
-//                post.getPostId(),
-//                post.getUser().getId(),
-//                post.getUser().getUserName(),
-//                fullName,
-//                post.getPostText(),
-//                post.getCreatedAt(),
-//                likeCount,
-//                likedUsers,
-//                false,
-//                comments,
-//                post.getUser().getProfilePictureUrl(),
-//                imageUrls,
-//                false
-//
-//
-//        );
-//
-//        messagingTemplate.convertAndSend("/topic/posts", postDTO);
-//        return postDTO;
-//    }
 public PostDTO addPost(Post post, List<String> imageUrls) {
     User user = authHelper.getCurrentUser();
     post.setUser(user);
@@ -146,7 +56,7 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
             .toList();
     postImageRepository.saveAll(images);
     post.setImages(new HashSet<>(images));
-    PostDTO postDTO = postMapper.toDto(post, user.getId(), 0, 0); // ← 👈 אין לייקים ותגובות עדיין
+    PostDTO postDTO = postMapper.toDto(post, user.getId(), 0, 0);
     messagingTemplate.convertAndSend("/topic/posts", postDTO);
     return postDTO;
 }
@@ -235,6 +145,16 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
 
         postRepository.delete(post);
     }
+    @Transactional
+    public PostDTO getPostById(long postId) {
+        User currentUser = authHelper.getCurrentUser();
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
 
+        int likeCount = likeRepository.countLikesByPostId(post.getPostId());
+        int commentCount = commentRepository.countCommentsByPostId(post.getPostId());
+
+        return postMapper.toDto(post, currentUser.getId(), likeCount, commentCount);
+    }
 }
 

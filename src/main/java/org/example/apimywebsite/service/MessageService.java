@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,16 +25,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private MessageDTO toDTO(Message message) {
-        return new MessageDTO(
-                message.getId(),
-                message.getMessage(),
-                message.getSentTime(),
-                message.getSender().getId(),
-                message.getReceiver().getId(),
-                message.isRead()
-        );
-    }
+
     public MessageDTO sendMessage(int senderId, int receiverId, String messageContent) {
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
@@ -45,14 +37,8 @@ public class MessageService {
         message.setMessage(messageContent);
         message.setSentTime(OffsetDateTime.now(ZoneOffset.UTC));
 
-
         if (ActiveChatTracker.isUserInChatWith(receiverId, senderId)) {
-            System.out.println("📊 ActiveChatTracker state: " + ActiveChatTracker.getAll());
-
             message.setRead(true);
-            System.out.println("✅ marking message as READ immediately");
-        } else {
-            System.out.println("ℹ️ message will be UNREAD");
         }
         Message savedMessage = messageRepository.save(message);
         return convertToDTO(savedMessage);
@@ -83,24 +69,10 @@ public class MessageService {
         );
     }
 
-    public void saveMessage(MessageDTO messageDTO) {
-        User sender = userRepository.findById(messageDTO.getSenderId()).orElseThrow();
-        User receiver = userRepository.findById(messageDTO.getReceiverId()).orElseThrow();
-
-        Message message = new Message();
-        message.setSender(sender);
-        message.setReceiver(receiver);
-        message.setMessage(messageDTO.getMessage());
-        message.setSentTime(OffsetDateTime.now(ZoneOffset.UTC));
-
-        messageRepository.save(message);
-        System.out.println("✅ Message saved in DB: " + message);
-    }
 
     @Transactional
     public void markMessagesAsRead(int senderId, int receiverId) {
         if (!ActiveChatTracker.isUserInChatWith(receiverId, senderId)) {
-            System.out.println("❗ " + receiverId + " is not in active chat with " + senderId + " – skipping mark as read");
             return;
         }
         List<Message> unreadMessages = messageRepository
@@ -115,4 +87,15 @@ public class MessageService {
                 .toList();
         messagingTemplate.convertAndSend("/topic/messages/" + senderId, updatedDTOs);
     }
+
+
+    public Map<Integer, Long> getUnreadSummary(int userId) {
+        return messageRepository.countUnreadBySenderGrouped(userId)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> ((Number) r[0]).intValue(),   // senderId
+                        r -> ((Number) r[1]).longValue()   // count
+                ));
+    }
+
 }

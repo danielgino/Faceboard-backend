@@ -30,6 +30,15 @@ public interface MessageRepository extends JpaRepository<Message, Integer> {
 """)
     List<Message> findConversationBetweenUsers(int userId, int otherUserId);
     List<Message> findBySenderIdAndReceiverIdAndIsReadFalse(int senderId, int receiverId);
+
+    @Query("""
+    SELECT m.sender.id AS senderId, COUNT(m) AS cnt
+    FROM Message m
+    WHERE m.receiver.id = :userId AND m.isRead = false
+    GROUP BY m.sender.id
+""")
+    List<Object[]> countUnreadBySenderGrouped(@Param("userId") int userId);
+
     @Query("""
     SELECT m FROM Message m
     WHERE (m.sender.id = :userId AND m.receiver.id IN :friendIds)

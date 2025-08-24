@@ -1,20 +1,14 @@
 package org.example.apimywebsite.api.controller;
 
 import org.example.apimywebsite.api.model.Friends;
-import org.example.apimywebsite.api.model.FriendshipId;
-import org.example.apimywebsite.api.model.FriendshipStatus;
+import org.example.apimywebsite.enums.FriendshipStatus;
 import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.dto.FriendRequestDTO;
-import org.example.apimywebsite.repository.FriendshipRepository;
 import org.example.apimywebsite.service.FriendshipService;
 import org.example.apimywebsite.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/friendship")
@@ -66,7 +60,6 @@ public class FriendshipController {
         return ResponseEntity.ok("Friendship accepted.");
     }
 
-    // ביטול חברות
     @DeleteMapping("/remove/{userId}/{friendId}")
     public ResponseEntity<?> removeFriendship(@PathVariable int userId, @PathVariable int friendId) {
         User user = userService.findById(userId);

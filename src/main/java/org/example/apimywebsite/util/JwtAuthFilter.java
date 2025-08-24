@@ -39,24 +39,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        System.out.println("🛡 JwtAuthFilter activated for request: " + request.getRequestURI());
-
         String authHeader = request.getHeader("Authorization");
-        System.out.println("🛡️ Raw Authorization Header: " + authHeader);
-
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             String username = jwtUtil.extractUsername(token);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userRepository.findByUserName(username);
-                System.out.println("👤 Decoded username: " + username);
-
                 if (user != null && jwtUtil.isTokenValid(token, username)) {
-                    System.out.println("🛡 Token: " + token);
-                    System.out.println("🛡 Username: " + username);
-                    System.out.println("🛡 Valid: " + jwtUtil.isTokenValid(token, username));
-
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                             username, null,
                             List.of(new SimpleGrantedAuthority("ROLE_USER"))

@@ -13,8 +13,6 @@ public interface UserMapper {
 
     @Mapping(source = "userName", target = "username")
     UserDTO toUserDTO(User user);
-
-    // UserDTO כולל חברים
     default UserDTO toUserDTOWithFriends(User user, List<User> friends) {
         UserDTO dto = toUserDTO(user);
         List<FriendDTO> friendDTOs = friends.stream()
@@ -24,19 +22,15 @@ public interface UserMapper {
         return dto;
     }
 
-    // UserDTO כולל חברים + הודעה אחרונה
     default UserDTO toUserDTOWithFriendsAndLastMessage(User user, List<FriendDTO> enrichedFriends) {
         UserDTO dto = toUserDTO(user);
         dto.setFriendsList(enrichedFriends);
         return dto;
     }
-
-    // FriendDTO בסיסי
     default FriendDTO toFriendDTO(User user) {
         return new FriendDTO(user.getId(), user.getName(), user.getLastname(), user.getUserName(), user.getProfilePictureUrl());
     }
 
-    // FriendDTO עם הודעה אחרונה
     default FriendDTO toFriendDTOWithMessage(User friend, Message lastMessage, int currentUserId) {
         FriendDTO dto = toFriendDTO(friend);
         if (lastMessage != null) {

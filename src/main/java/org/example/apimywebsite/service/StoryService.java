@@ -53,6 +53,7 @@ public class StoryService {
             return storyRepository.save(story);
         } catch (IOException e) {
             throw new RuntimeException("Upload to Cloudinary failed", e);
+
         }
     }
 

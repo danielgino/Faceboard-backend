@@ -2,10 +2,8 @@ package org.example.apimywebsite.api.controller;
 
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.example.apimywebsite.api.model.Notification;
 import org.example.apimywebsite.dto.NotificationDTO;
 import org.example.apimywebsite.service.NotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

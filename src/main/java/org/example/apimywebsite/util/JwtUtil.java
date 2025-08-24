@@ -11,9 +11,6 @@ import java.util.Date;
 
 public class JwtUtil {
 
-
-//    private static final String SECRET = "mySuperSecretKeyThatIsLongEnoughForHMAC256!123456";
-//    private final SecretKey secretKey = Keys.hmacShaKeyFor(SECRET.getBytes());
 private final SecretKey secretKey;
 
 //PRODUCTION
@@ -32,7 +29,6 @@ private final SecretKey secretKey;
         String secret = System.getenv("JWT_SECRET");
 
         if (secret == null || secret.isBlank()) {
-            System.out.println("⚠️ JWT_SECRET not found in environment. Using default development key.");
             secret = "localDevSecretKeyThatIsLongEnoughForHMAC256_123456789";
         }
 

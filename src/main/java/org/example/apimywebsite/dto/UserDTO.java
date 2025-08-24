@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.*;
 
-import org.example.apimywebsite.api.model.Gender;
+import org.example.apimywebsite.enums.Gender;
 import org.example.apimywebsite.common.Person;
 
 import java.time.LocalDate;

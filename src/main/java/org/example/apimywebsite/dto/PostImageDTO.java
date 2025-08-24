@@ -6,12 +6,10 @@ import lombok.Setter;
 @Setter
 @Getter
 public class PostImageDTO {
-    // Getters and Setters
     private Long id;
     private Long postId;
     private String imageUrl;
 
-    // Constructors
     public PostImageDTO() {}
 
     public PostImageDTO(Long id, Long postId, String imageUrl) {

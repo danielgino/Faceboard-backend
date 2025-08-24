@@ -12,12 +12,10 @@ import java.util.List;
 @Repository
 public interface StoryRepository extends JpaRepository<Story, Long> {
 
-//    List<Story> findByUserIdInAndExpiresAtAfter(List<Integer> userIds, LocalDateTime now);
     @Query("SELECT s FROM Story s WHERE s.user.id IN :userIds AND s.expiresAt > :now")
     List<Story> findByUserIdInAndExpiresAtAfter(@Param("userIds") List<Integer> userIds,
                                                 @Param("now") LocalDateTime now);
 
-//    List<Story> findByExpiresAtBefore(LocalDateTime now);
 @Query("SELECT s FROM Story s WHERE s.expiresAt < :now")
 List<Story> findByExpiresAtBefore(@Param("now") LocalDateTime now);
 }

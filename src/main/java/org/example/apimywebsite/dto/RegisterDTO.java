@@ -3,7 +3,8 @@ package org.example.apimywebsite.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
-import org.example.apimywebsite.api.model.Gender;
+import org.example.apimywebsite.configuration.PasswordPolicy;
+import org.example.apimywebsite.enums.Gender;
 
 import java.time.LocalDate;
 
@@ -18,11 +19,10 @@ public class RegisterDTO {
 
     @NotBlank(message = "Password is required")
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}:\";'<>?,./]).{8,}$",
-            message = "Password must include upper/lowercase letters, a number, and a special character"
+            regexp = PasswordPolicy.REGEX,
+            message = PasswordPolicy.MESSAGE
     )
     private String password;
-
     @NotBlank(message = "First name is required")
     @Pattern(regexp = "^[A-Za-z\u0590-\u05FF]+$", message = "Name must contain only letters")
     @Size(min = 2, message = "Name must be at least 2 characters")
@@ -45,7 +45,6 @@ public class RegisterDTO {
 
     @NotNull(message = "Gender is required")
     private Gender gender;
-    // Getters and Setters
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 

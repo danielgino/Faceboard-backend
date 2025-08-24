@@ -13,9 +13,9 @@ public class StartupRunner {
         return args -> {
             try {
                 long count = userRepository.count();
-                System.out.println("✅ Users count in DB: " + count);
+                System.out.println("Users count in DB: " + count);
             } catch (Exception e) {
-                System.out.println("❌ Failed to query users: " + e.getMessage());
+                System.out.println("Failed to query users: " + e.getMessage());
                 e.printStackTrace();
             }
         };

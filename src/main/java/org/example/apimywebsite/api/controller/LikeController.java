@@ -1,18 +1,9 @@
 package org.example.apimywebsite.api.controller;
-
 import jakarta.servlet.http.HttpServletRequest;
-import org.example.apimywebsite.api.model.Comment;
 import org.example.apimywebsite.api.model.Like;
-import org.example.apimywebsite.api.model.Post;
-import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.dto.LikeDTO;
-import org.example.apimywebsite.repository.LikeRepository;
-import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.LikeService;
-import org.example.apimywebsite.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +14,6 @@ public class LikeController {
 
 
     private LikeService likeService;
-
-
     public LikeController(LikeService likeService) {
         this.likeService=likeService;
     }

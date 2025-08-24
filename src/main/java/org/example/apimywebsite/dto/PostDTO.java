@@ -2,10 +2,7 @@ package org.example.apimywebsite.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.example.apimywebsite.api.model.PostImage;
-
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 @Setter
@@ -23,9 +20,6 @@ public class PostDTO {
     private String profilePictureUrl;
     private List<String> imageUrls;
     private boolean likedByCurrentUser;
-//    private List<LikeDTO> likedUsers;
-//    private List<CommentDTO> comments;
-
     private boolean edited=false;
 
     public PostDTO(long id, int userId,String username, String fullName, String content, LocalDateTime createdAt,
@@ -39,10 +33,7 @@ public class PostDTO {
         this.content = content;
         this.createdAt = createdAt;
         this.likeCount = likeCount;
-//        this.likedUsers = likedUsers;
-//        this.comments = comments;
         this.likedByCurrentUser=likedByCurrentUser;
-
         this.profilePictureUrl =profilePictureUrl;
         this.imageUrls=imageUrls;
         this.edited=edited;

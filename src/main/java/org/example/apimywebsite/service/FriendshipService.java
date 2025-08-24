@@ -3,7 +3,7 @@ package org.example.apimywebsite.service;
 import jakarta.transaction.Transactional;
 import org.example.apimywebsite.api.model.Friends;
 import org.example.apimywebsite.api.model.FriendshipId;
-import org.example.apimywebsite.api.model.FriendshipStatus;
+import org.example.apimywebsite.enums.FriendshipStatus;
 import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.dto.FriendRequestDTO;
 import org.example.apimywebsite.repository.FriendshipRepository;

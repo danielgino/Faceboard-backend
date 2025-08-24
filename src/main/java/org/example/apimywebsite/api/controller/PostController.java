@@ -1,9 +1,7 @@
 package org.example.apimywebsite.api.controller;
 
-import org.example.apimywebsite.api.model.PostImage;
 import org.example.apimywebsite.dto.EditPostRequestDTO;
 import org.example.apimywebsite.dto.PostDTO;
-import org.example.apimywebsite.dto.PostImageDTO;
 import org.example.apimywebsite.repository.PostRepository;
 import org.example.apimywebsite.service.CloudinaryService;
 import org.example.apimywebsite.service.LikeService;
@@ -13,14 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.example.apimywebsite.api.model.Post;
-
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -86,7 +79,6 @@ public ResponseEntity<List<PostDTO>> getPostToFeed(
                         .body(null);
             }
 
-            // ✅ העלאת תמונות ל-Cloudinary ושמירת ה-URLs
             if (files != null) {
                 for (MultipartFile file : files) {
                     if (!file.isEmpty()) {
@@ -95,13 +87,9 @@ public ResponseEntity<List<PostDTO>> getPostToFeed(
                     }
                 }
             }
-
-            // ✅ יצירת ושמירת הפוסט
             Post post = new Post();
             post.setPostText(postText);
-
             PostDTO postDTO = postService.addPost(post, imageUrls);
-
             return ResponseEntity.ok(postDTO);
 
         } catch (RuntimeException e) {
@@ -129,4 +117,11 @@ public ResponseEntity<List<PostDTO>> getPostToFeed(
         PostDTO updatedPost = postService.editPost(postId, request.getContent());
         return ResponseEntity.ok(updatedPost);
     }
+
+    @GetMapping("/{postId}")
+    public ResponseEntity<PostDTO> getPostById(@PathVariable long postId) {
+        PostDTO dto = postService.getPostById(postId);
+        return ResponseEntity.ok(dto);
+    }
+
 }

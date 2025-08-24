@@ -2,7 +2,7 @@ package org.example.apimywebsite.repository;
 
 import org.example.apimywebsite.api.model.Friends;
 import org.example.apimywebsite.api.model.FriendshipId;
-import org.example.apimywebsite.api.model.FriendshipStatus;
+import org.example.apimywebsite.enums.FriendshipStatus;
 import org.example.apimywebsite.api.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,5 +16,4 @@ public interface FriendshipRepository extends JpaRepository<Friends, Long> {
 
     List<Friends> findAllByUserAndStatus(User user, FriendshipStatus status);
 
-    List<Friends> findAllByFriendAndStatus(User user, FriendshipStatus status);
 }

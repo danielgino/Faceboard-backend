@@ -3,13 +3,11 @@ package org.example.apimywebsite.dto;
 
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.example.apimywebsite.api.model.Gender;
-
-import java.time.LocalDate;
+import org.example.apimywebsite.configuration.PasswordPolicy;
+import org.example.apimywebsite.enums.Gender;
 
 
 @Data
@@ -29,10 +27,10 @@ public class UpdateUserDTO {
 
 
     private Gender gender;
-    @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-={}:\";'<>?,./]).{8,}$",
-            message = "New password must include upper/lowercase letters, a number, and a special character"
-    )
+@Pattern(
+        regexp = PasswordPolicy.REGEX,
+        message = PasswordPolicy.MESSAGE
+)
     private String newPassword;
 
     private String currentPassword;

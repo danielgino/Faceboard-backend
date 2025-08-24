@@ -14,8 +14,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 
 @Data
-@NoArgsConstructor // נדרש כדי ש-Jackson יוכל להמיר JSON לאובייקט
-        //@AllArgsConstructor
+@NoArgsConstructor
 @AllArgsConstructor
 public class MessageDTO {
 

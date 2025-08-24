@@ -12,9 +12,6 @@ import java.util.Objects;
 @Getter
 @Embeddable
 public class FriendshipId implements Serializable {
-
-
-    // Getters and Setters
     @Column(name = "user_id")
     private int userId;
 

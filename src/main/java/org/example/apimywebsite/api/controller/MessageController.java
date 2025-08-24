@@ -2,16 +2,12 @@ package org.example.apimywebsite.api.controller;
 
 
 import lombok.RequiredArgsConstructor;
-import org.example.apimywebsite.api.model.Message;
 import org.example.apimywebsite.dto.MessageDTO;
 import org.example.apimywebsite.service.MessageService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/messages")
@@ -33,6 +29,13 @@ public class MessageController {
         messageService.markMessagesAsRead(senderId, receiverId);
         return ResponseEntity.ok("Messages marked as read");
     }
+
+    @GetMapping("/unread-summary/{userId}")
+    public ResponseEntity<Map<Integer, Long>> getUnreadSummary(@PathVariable int userId) {
+        return ResponseEntity.ok(messageService.getUnreadSummary(userId));
+    }
+
+
     @GetMapping("/conversation/{userId}/{otherUserId}")
     public ResponseEntity<List<MessageDTO>> getConversation(
             @PathVariable int userId,

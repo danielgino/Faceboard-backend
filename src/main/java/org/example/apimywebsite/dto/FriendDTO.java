@@ -31,8 +31,6 @@ public class FriendDTO implements Person {
 public FriendDTO(){
 
 }
-
-
     @Override
     @JsonProperty("fullName")
     public String getFullName() {

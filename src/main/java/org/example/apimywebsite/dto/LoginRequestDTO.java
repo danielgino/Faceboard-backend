@@ -3,7 +3,7 @@ package org.example.apimywebsite.dto;
 import lombok.Data;
 
 @Data
-public class LoginRequest {
+public class LoginRequestDTO {
     private String userName;
     private String password;
 

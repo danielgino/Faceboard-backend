@@ -1,4 +1,4 @@
-package org.example.apimywebsite.api.model;
+package org.example.apimywebsite.enums;
 
 public enum Gender {
     MALE,
