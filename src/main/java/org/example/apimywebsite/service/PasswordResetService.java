@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
 
+import static org.example.apimywebsite.util.Constants.CLIENT_SIDE_SERVER;
+
 @Service
 public class PasswordResetService {
     private final UserRepository userRepo;
@@ -27,7 +29,7 @@ public class PasswordResetService {
     private final PasswordEncoder encoder;
     private final MailService mail;
 
-    @Value("${app.frontendBaseUrl:http://localhost:3000}")
+    @Value(CLIENT_SIDE_SERVER)
     private String frontendBaseUrl;
 
     private static final SecureRandom RNG = new SecureRandom();

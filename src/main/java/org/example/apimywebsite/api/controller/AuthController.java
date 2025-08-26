@@ -28,10 +28,6 @@ public class AuthController {
     private PasswordResetService passwordResetService;
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
-        System.out.println("✅ login() called");
-        System.out.println("Username: " + loginRequest.getUserName());
-        System.out.println("Password: " + loginRequest.getPassword());
-
         String token = userService.login(loginRequest.getUserName(), loginRequest.getPassword());
         if (token != null) {
             return ResponseEntity.ok(token);

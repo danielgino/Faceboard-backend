@@ -11,7 +11,7 @@ public class WebSocketDisconnectListener {
 
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
-        System.out.println("🔌 SessionDisconnectEvent triggered");
+//        System.out.println("SessionDisconnectEvent triggered");
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String userIdStr = headerAccessor.getFirstNativeHeader("userId");
 

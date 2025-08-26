@@ -6,15 +6,4 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/mail")
 public class MailController {
 
-
-
-
-
-    @RestController
-    @RequestMapping("/dev")
-    class DevMailController {
-        private final MailService mail;
-        DevMailController(MailService mail) { this.mail = mail; }
-
-    }
 }
