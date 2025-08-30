@@ -59,13 +59,19 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public String login(String username, String password) {
-        User user = userRepository.findByUserName(username);
-        if (user != null && passwordEncoder.matches(password, user.getPassword())|| user.getPassword().equals(password)) {
-            return jwtUtil.generateToken(username);
-        }
-        return null;
+public String loginByEmail(String email, String password) {
+    if (email == null || email.isBlank()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
     }
+
+    User user = userRepository.findByEmail(email);
+    if (user == null) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+    }
+    if (!passwordEncoder.matches(password, user.getPassword())) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+    }return jwtUtil.generateToken(user.getUserName());
+}
 
     public void register(RegisterDTO dto) {
         if (userRepository.findByUserName(dto.getUsername()) != null) {
@@ -97,7 +103,7 @@ public class UserService {
     public boolean isOldEnough(LocalDate birthDate, int minAge) {
         return Period.between(birthDate, LocalDate.now()).getYears() >= minAge;
     }
-//להחזיר
+
     public UserDTO updateUserDetails(int userId, UpdateUserDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -133,59 +139,6 @@ public class UserService {
         userRepository.save(user);
         return getUserDTOById(userId);
     }
-
-//    public UserDTO updateUserDetails(int userId, UpdateUserDTO dto) {
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-//
-//        if (dto.getNewPassword() != null) {
-//            if (dto.getCurrentPassword() == null) {
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is required");
-//            }
-//
-//            String current = dto.getCurrentPassword();
-//            String next    = dto.getNewPassword();
-//
-//            boolean currentOk =
-//                    passwordEncoder.matches(current, user.getPassword())
-//                            || current.equals(user.getPassword()); // תמיכה ב-plaintext
-//
-//            if (!currentOk) {
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
-//            }
-//
-//            boolean sameAsOld =
-//                    passwordEncoder.matches(next, user.getPassword())
-//                            || next.equals(user.getPassword());
-//
-//            if (sameAsOld) {
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different");
-//            }
-//
-//            if (!PasswordPolicy.isValid(next)) {
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PasswordPolicy.MESSAGE);
-//            }
-//
-//            user.setPassword(passwordEncoder.encode(next));
-//        }
-//
-//        if (dto.getName() != null) user.setName(capitalize(dto.getName()));
-//        if (dto.getLastname() != null) user.setLastname(capitalize(dto.getLastname()));
-//        if (dto.getGender() != null) user.setGender(dto.getGender());
-//        if (dto.getBio() != null) user.setBio(dto.getBio());
-//        if (dto.getFacebookUrl() != null) user.setFacebookUrl(dto.getFacebookUrl());
-//        if (dto.getInstagramUrl() != null) user.setInstagramUrl(dto.getInstagramUrl());
-//
-//        if (dto.getEmail() != null && !dto.getEmail().equalsIgnoreCase(user.getEmail())) {
-//            if (userRepository.findByEmail(dto.getEmail()) != null) {
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
-//            }
-//            user.setEmail(dto.getEmail().toLowerCase());
-//        }
-//
-//        userRepository.save(user);
-//        return getUserDTOById(userId);
-//    }
 
 
     public User getUser(Integer id) {

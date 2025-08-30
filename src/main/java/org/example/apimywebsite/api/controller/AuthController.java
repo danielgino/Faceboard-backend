@@ -26,16 +26,18 @@ public class AuthController {
 
     @Autowired
     private PasswordResetService passwordResetService;
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
-        String token = userService.login(loginRequest.getUserName(), loginRequest.getPassword());
-        if (token != null) {
-            return ResponseEntity.ok(token);
-        } else {
-            return ResponseEntity.status(401).body("Invalid username or password");
+@PostMapping("/login")
+public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
+    try {
+        String token = userService.loginByEmail(loginRequest.getEmail(), loginRequest.getPassword());
+        return ResponseEntity.ok(token);
+    } catch (ResponseStatusException ex) {
+        if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
         }
+        throw ex;
     }
-
+}
     @GetMapping("/me")
     public ResponseEntity<?> getUserDetails(@RequestHeader("Authorization") String token) {
         if (token.startsWith("Bearer ")) {
