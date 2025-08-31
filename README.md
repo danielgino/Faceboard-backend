@@ -8,7 +8,7 @@
 A robust **Spring Boot backend** for a modern social networking platform.  
 This service powers features such as authentication, posts, comments, likes, friendships, real-time chat, notifications, stories, and profile management.  
 ---
-## Live Demo: https://faceboard-frontend.vercel.app/
+## **Live demo:** [https://faceboard-frontend.vercel.app](https://faceboard-frontend.vercel.app)
  
 
 ## 🚀 Features
