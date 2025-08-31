@@ -1,3 +1,8 @@
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f5783ee3-9716-4606-ac48-422ba553cd1a" alt="Facrboard React Project" width="550"/>
+</p>
+
 # 🌐 Faceboard – Social Network Backend
 
 A robust **Spring Boot backend** for a modern social networking platform.  
