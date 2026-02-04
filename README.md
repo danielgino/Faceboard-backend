@@ -102,8 +102,3 @@ jwt.secret=yourSuperSecretKey
 ```
 mvn spring-boot:run
 ```
-## ✅ Future Improvements
-- 🔍 Add search functionality (users, posts, hashtags)
-- 🛡️ Admin panel & moderation tools
-- 📊 GraphQL endpoints for flexible queries
-- ✅ More unit & integration tests
