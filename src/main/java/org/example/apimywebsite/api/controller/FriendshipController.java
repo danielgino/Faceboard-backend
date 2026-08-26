@@ -64,8 +64,7 @@ public class FriendshipController {
     public ResponseEntity<?> removeFriendship(@PathVariable int userId, @PathVariable int friendId) {
         User user = userService.findById(userId);
         User friend = userService.findById(friendId);
-        friendshipService.removeFriend(user, friend);
-        friendshipService.removeFriend(friend, user);
+        friendshipService.removeFriendship(user, friend);
         return ResponseEntity.ok("Friendship removed.");
     }
     @PostMapping("/decline")

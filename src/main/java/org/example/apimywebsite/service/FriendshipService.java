@@ -105,4 +105,10 @@ public class FriendshipService {
         Optional<Friends> friendship = friendshipRepository.findByUserAndFriend(user, friend);
         friendship.ifPresent(friendshipRepository::delete);
     }
+
+    @Transactional
+    public void removeFriendship(User user, User friend) {
+        removeFriend(user, friend);
+        removeFriend(friend, user);
+    }
 }
