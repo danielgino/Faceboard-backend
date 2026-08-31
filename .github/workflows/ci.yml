@@ -33,6 +33,8 @@ jobs:
       CLOUDINARY_API_KEY: ci-test-key
       CLOUDINARY_API_SECRET: ci-test-secret
 
+      SMTP_EMAIL: ci-test@example.com
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
