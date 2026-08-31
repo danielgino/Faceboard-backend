@@ -3,7 +3,8 @@ name: Backend CI
 on:
   push:
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build-and-test:
@@ -23,14 +24,14 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
-  env:
-    DB_URL: jdbc:mysql://127.0.0.1:3306/faceboard_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    DB_USERNAME: root
-    DB_PASSWORD: ci_test_password
+    env:
+      DB_URL: jdbc:mysql://127.0.0.1:3306/faceboard_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: ci_test_password
 
-    CLOUDINARY_NAME: ci-test
-    CLOUDINARY_API_KEY: ci-test-key
-    CLOUDINARY_API_SECRET: ci-test-secret
+      CLOUDINARY_NAME: ci-test
+      CLOUDINARY_API_KEY: ci-test-key
+      CLOUDINARY_API_SECRET: ci-test-secret
 
     steps:
       - name: Checkout repository
