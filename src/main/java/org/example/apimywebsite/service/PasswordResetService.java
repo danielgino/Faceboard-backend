@@ -20,8 +20,6 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
 
-import static org.example.apimywebsite.util.Constants.CLIENT_SIDE_SERVER;
-
 @Service
 public class PasswordResetService {
     private final UserRepository userRepo;
@@ -29,7 +27,7 @@ public class PasswordResetService {
     private final PasswordEncoder encoder;
     private final MailService mail;
 
-    @Value(CLIENT_SIDE_SERVER)
+    @Value("${app.frontendBaseUrl}")
     private String frontendBaseUrl;
 
     private static final SecureRandom RNG = new SecureRandom();
@@ -54,10 +52,6 @@ public class PasswordResetService {
                     .expiresAt(LocalDateTime.now().plusMinutes(30))
                     .build();
 
-            tokenRepo.save(prt);;
-            prt.setUser(user);
-            prt.setTokenHash(tokenHash);
-            prt.setExpiresAt(LocalDateTime.now().plusMinutes(30));
             tokenRepo.save(prt);
 
             String url = frontendBaseUrl + "/reset-password?token=" +
@@ -74,22 +68,34 @@ public class PasswordResetService {
             mail.send(user.getEmail(), "Reset your password", body);
         });
     }
+    // COR-003 fix: the previous plain SELECT-then-update let two concurrent requests both read
+    // the same unused token, both pass validation, and both write a password - whichever
+    // transaction committed last silently won. markUsedIfUnexpiredAndUnused is an atomic
+    // conditional UPDATE (single-use claim); only the caller that actually flips usedAt from
+    // null wins the race, and everyone else is rejected as "Invalid or expired token" exactly
+    // like a genuinely already-used token. The claim and the password write stay in this same
+    // @Transactional method, per COR-003's requirement.
     @Transactional
     public void resetPassword(String rawToken, String newPassword) {
         if (!PasswordPolicy.isValid(newPassword)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PasswordPolicy.MESSAGE);
         }
         String tokenHash = sha256(rawToken);
+        LocalDateTime now = LocalDateTime.now();
+
         PasswordResetToken prt = tokenRepo
-                .findByTokenHashAndExpiresAtAfterAndUsedAtIsNull(tokenHash, LocalDateTime.now())
+                .findByTokenHashAndExpiresAtAfterAndUsedAtIsNull(tokenHash, now)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired token"));
+
+        int claimed = tokenRepo.markUsedIfUnexpiredAndUnused(tokenHash, now);
+        if (claimed != 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired token");
+        }
 
         User user = prt.getUser();
         user.setPassword(encoder.encode(newPassword));
         userRepo.save(user);
 
-        prt.setUsedAt(LocalDateTime.now());
-        tokenRepo.save(prt);
         tokenRepo.deleteByUserId(user.getId());
     }
 
@@ -103,6 +109,6 @@ public class PasswordResetService {
         try {
             var md = java.security.MessageDigest.getInstance("SHA-256");
             return java.util.HexFormat.of().formatHex(md.digest(s.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception e) { throw new RuntimeException(e); }
+        } catch (java.security.NoSuchAlgorithmException e) { throw new RuntimeException(e); }
     }
 }

@@ -67,6 +67,15 @@
             <artifactId>cloudinary-http44</artifactId>
             <version>1.32.0</version>
         </dependency>
+        <!-- H2 fix: the JDK's built-in javax.imageio has no WEBP reader, so real-content
+             validation of WEBP uploads (ImageUploadValidator) needs this small, actively
+             maintained plugin to register a WEBP ImageIO SPI. Read-only (no encoder), which is
+             all upload validation requires. -->
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-webp</artifactId>
+            <version>3.14.0</version>
+        </dependency>
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
@@ -85,6 +94,19 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- H1-B: version managed by spring-boot-starter-parent (Flyway 10.x for Boot 3.4.x).
+             MySQL support moved out of flyway-core into this separate module as of Flyway 10, so
+             both are required. Enabled (spring.flyway.enabled=true in application.properties) -
+             Flyway is the active schema-management authority, running the migrations under
+             src/main/resources/db/migration against every datasource this app connects to. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
@@ -94,6 +116,19 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- contextLoads fix: ApiMyWebsiteApplicationTests boots the full application context
+             but has no real database available in a test JVM (the .env->system-property
+             bootstrap lives in ApiMyWebsiteApplication.main(), which @SpringBootTest never
+             invokes - production startup is intentionally not made to depend on this). An
+             in-memory H2 instance, active only under the "test" Spring profile
+             (application-test.properties), lets that one smoke test build a real schema from
+             the JPA entities and boot the full context without touching production
+             infrastructure or credentials. Version managed by spring-boot-starter-parent. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -126,13 +161,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
-
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-
 
         </plugins>
     </build>

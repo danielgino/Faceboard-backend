@@ -1,0 +1,16 @@
+.env
+.env.*
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+.claude
+*.iml
+*.iws
+*.ipr
+target/
+HELP.md
+README.md
+*.md
+render.yaml

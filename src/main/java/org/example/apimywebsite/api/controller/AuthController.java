@@ -1,12 +1,13 @@
 package org.example.apimywebsite.api.controller;
 
+import jakarta.validation.Valid;
 import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.dto.LoginRequestDTO;
 import org.example.apimywebsite.dto.PasswordResetDTO;
 import org.example.apimywebsite.dto.UserDTO;
 import org.example.apimywebsite.service.PasswordResetService;
 import org.example.apimywebsite.service.UserService;
-import org.example.apimywebsite.util.JwtUtil;
+import org.example.apimywebsite.util.AuthHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,12 +23,12 @@ public class AuthController {
     private UserService userService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private AuthHelper authHelper;
 
     @Autowired
     private PasswordResetService passwordResetService;
 @PostMapping("/login")
-public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
+public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
     try {
         String token = userService.loginByEmail(loginRequest.getEmail(), loginRequest.getPassword());
         return ResponseEntity.ok(token);
@@ -38,27 +39,22 @@ public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
         throw ex;
     }
 }
+    // M-OOP1: /auth/me is permitAll() (unlike every other AuthHelper consumer, which sits behind
+    // .anyRequest().authenticated()), so it's the one REST path where a request can reach the
+    // controller without Spring Security's authorization filter having already rejected an
+    // unauthenticated caller - this null-check is therefore still required (unlike
+    // CommentService/UserController's migrations, which needed no new guard). JwtAuthFilter
+    // already reads the Authorization header, validates the JWT, and populates the
+    // SecurityContext before this method runs; AuthHelper.getCurrentUser() reads that same
+    // SecurityContext instead of this controller re-parsing the same header/token a second time.
     @GetMapping("/me")
-    public ResponseEntity<?> getUserDetails(@RequestHeader("Authorization") String token) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        String username;
-        try {
-            username = jwtUtil.extractUsername(token);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
-        }
-        if (username == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
-        }
-        User user = userService.findByUserName(username);
+    public ResponseEntity<?> getUserDetails() {
+        User user = authHelper.getCurrentUser();
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }
         UserDTO userDTO = userService.getUserDTOById(user.getId());
         return ResponseEntity.ok(userDTO);
-
     }
     @PostMapping("/forgot-password")
     public ResponseEntity<Void> forgot(@RequestBody PasswordResetDTO dto) {

@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.jsonwebtoken.JwtException;
 import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.util.JwtUtil;
@@ -42,18 +43,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            String username = jwtUtil.extractUsername(token);
+            try {
+                String username = jwtUtil.extractUsername(token);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                User user = userRepository.findByUserName(username);
-                if (user != null && jwtUtil.isTokenValid(token, username)) {
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                            username, null,
-                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                    );
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    User user = userRepository.findByUserName(username);
+                    // SEC-005 fix: matchesCurrentPassword rejects a token issued before the
+                    // user's password was last changed/reset, even though it's otherwise a
+                    // validly signed, unexpired token for this username.
+                    if (user != null && jwtUtil.isTokenValid(token, username)
+                            && jwtUtil.matchesCurrentPassword(token, user.getPassword())) {
+                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                                username, null,
+                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                        );
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    }
                 }
+            } catch (JwtException | IllegalArgumentException e) {
+                // Invalid/expired/malformed/mis-signed token: leave the request unauthenticated
+                // so Spring Security's own filter chain produces the normal 401/403 response,
+                // instead of letting a JWT parsing exception surface as an unhandled 500.
+                SecurityContextHolder.clearContext();
             }
         }
 

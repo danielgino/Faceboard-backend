@@ -36,12 +36,12 @@ public class UpdateUserDTO {
     private String currentPassword;
 
     @Pattern(
-            regexp = "^$|^(https?://)?(www\\.)?facebook\\.com/[^\\s]+$",
+            regexp = "^$|^https://(www\\.)?facebook\\.com/[^\\s]+$",
             message = "Facebook URL must be a valid facebook.com link"
     )
     private String facebookUrl;
     @Pattern(
-            regexp = "^$|^(https?://)?(www\\.)?instagram\\.com/[^\\s]+$",
+            regexp = "^$|^https://(www\\.)?instagram\\.com/[^\\s]+$",
             message = "Instagram URL must be a valid instagram.com link"
     )
     private String instagramUrl;

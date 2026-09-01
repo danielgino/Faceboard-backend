@@ -24,11 +24,15 @@ public class WebSocket implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Must mirror SecurityConfig's corsConfigurationSource() allowed-origins list exactly:
+        // this handshake-level origin check is enforced by Spring's WebSocket layer
+        // (OriginHandshakeInterceptor, added implicitly by setAllowedOrigins), a separate
+        // mechanism from the SecurityFilterChain/CORS bean above it - /ws/** being permitAll
+        // there does not exempt the handshake from this check. Omitting localhost:3000 here
+        // (as before) makes every local-dev WebSocket handshake fail with 403 before the STOMP
+        // CONNECT frame - and therefore JwtChannelInterceptor - is ever reached.
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("https://faceboard-frontend.vercel.app");
-//                .setAllowedOrigins("http://localhost:3000", "https://faceboard-frontend.vercel.app");
-
-
+                .setAllowedOrigins("http://localhost:3000", "https://faceboard-frontend.vercel.app");
     }
 
     @Override

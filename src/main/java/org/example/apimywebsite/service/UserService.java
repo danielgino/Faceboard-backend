@@ -11,6 +11,8 @@ import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.util.Constants;
 import org.example.apimywebsite.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -47,16 +49,33 @@ public class UserService {
 
     public String uploadProfilePicture(int userId, MultipartFile file) throws IOException {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        String oldImageUrl = user.getProfilePictureUrl();
+        // Cloudinary orphan-image cleanup: upload the new image FIRST - if it throws, nothing
+        // below runs, so the old picture is never deleted for a failed replacement (unchanged
+        // existing guarantee, now also protecting the old Cloudinary asset, not just the DB row).
         String imageUrl = cloudinaryService.uploadImage(file);
         user.setProfilePictureUrl(imageUrl);
-        userRepository.save(user);
+        // COR-010 fix: if the save that would make this user row actually reference the new
+        // image fails, the newly-uploaded asset itself becomes the orphan (it was never the old
+        // one's turn to be deleted, so that part was already safe - see comment above). Compensate
+        // by deleting the just-uploaded new asset before propagating the failure; the old asset
+        // is left completely untouched either way.
+        try {
+            userRepository.save(user);
+        } catch (RuntimeException e) {
+            cloudinaryService.deleteImage(imageUrl);
+            throw e;
+        }
+        cloudinaryService.deleteImage(oldImageUrl);
         return imageUrl;
     }
 
     public void removeProfilePicture(int userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        String oldImageUrl = user.getProfilePictureUrl();
         user.setProfilePictureUrl(user.getGender() == Gender.FEMALE ? Constants.DEFAULT_PROFILE_PICTURE_FEMALE : Constants.DEFAULT_PROFILE_PICTURE_MALE);
         userRepository.save(user);
+        cloudinaryService.deleteImage(oldImageUrl);
     }
 
 public String loginByEmail(String email, String password) {
@@ -70,7 +89,7 @@ public String loginByEmail(String email, String password) {
     }
     if (!passwordEncoder.matches(password, user.getPassword())) {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
-    }return jwtUtil.generateToken(user.getUserName());
+    }return jwtUtil.generateToken(user.getUserName(), user.getPassword());
 }
 
     public void register(RegisterDTO dto) {
@@ -137,7 +156,15 @@ public String loginByEmail(String email, String password) {
         }
 
         userRepository.save(user);
-        return getUserDTOById(userId);
+
+        // M-DB3: PUT /user/settings's known frontend callers (per-field autosave and the
+        // password-change form) both discard this response body entirely, so unlike GET /auth/me
+        // (unchanged, still via getUserDTOById) there is no reason to pay for the last-message
+        // enrichment here. Reuses the existing toUserDTOWithFriends mapper (same UserDTO shape/
+        // field set as getUserDTOById - friendsList entries just carry unset lastMessage*/
+        // sentByCurrentUser fields instead of populated ones) rather than adding a new DTO/method.
+        List<User> friends = friendshipService.getAcceptedFriends(user);
+        return userMapper.toUserDTOWithFriends(user, friends);
     }
 
 
@@ -158,6 +185,25 @@ public String loginByEmail(String email, String password) {
                 .build();
     }
 
+    private static final int MAX_FRIENDS_PAGE_SIZE = 50;
+
+    public UserFriendsDTO getFriendsPageByUserId(int userId, int page, int size, String query) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), MAX_FRIENDS_PAGE_SIZE);
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+
+        List<User> friendsPage = friendshipService.getAcceptedFriendsPage(user, query, pageable);
+        return UserFriendsDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .username(user.getUserName())
+                .profilePictureUrl(user.getProfilePictureUrl())
+                .friendList(friendsPage.stream().map(userMapper::toFriendDTO).toList())
+                .build();
+    }
+
 
     public UserDTO getUserDTOById(int id) {
         User user = userRepository.findById(id)
@@ -165,7 +211,12 @@ public String loginByEmail(String email, String password) {
 
         List<User> friends = friendshipService.getAcceptedFriends(user);
         List<Integer> friendIds = friends.stream().map(User::getId).toList();
-        List<Message> lastMessages = messageRepository.findLastMessagesBetweenUserAndFriends(id, friendIds);
+        // M-DB3: skip the query entirely when there's nothing to search - avoids a pointless
+        // round-trip for the common case of a new/friendless user, and doesn't rely on Hibernate's
+        // empty-IN-clause handling.
+        List<Message> lastMessages = friendIds.isEmpty()
+                ? List.of()
+                : messageRepository.findLastMessagesBetweenUserAndFriends(id, friendIds);
         Map<Integer, Message> messageMap = new HashMap<>();
         for (Message msg : lastMessages) {
             int otherId = (msg.getSender().getId() == id) ? msg.getReceiver().getId() : msg.getSender().getId();
@@ -201,12 +252,39 @@ public String loginByEmail(String email, String password) {
     public User findByUserName(String userName) {
         return userRepository.findByUserName(userName);
     }
-public List<UserDTO> findUsersByFullName(String name) {
-    List<User> users = userRepository.searchByFullName(name.trim());
-    return users.stream()
-            .map(userMapper::toUserDTO)
-            .toList();
-}
+    // L-DB4A: max results a single search response can ever contain - this is autocomplete/
+    // preview UX, not a paginated directory, so a small bounded cap (applied at the DB query
+    // level via Pageable, not in-memory) is the correct fix rather than full Page<> pagination.
+    private static final int MAX_SEARCH_RESULTS = 20;
+
+    // Public-profile finding: getUserDTOById (full UserDTO, incl. email and message-preview
+    // enrichment) is intentionally not reused here - a search result must never carry those
+    // fields, regardless of who is searching.
+    public List<UserSearchResultDTO> searchUsersByName(String name) {
+        // L-DB4A: a blank/whitespace-only query previously became LIKE '%%' - matching (and
+        // returning) every user in the table. No legitimate search intent exists for a blank
+        // query, so it now short-circuits to an empty result before reaching the repository.
+        if (name == null || name.isBlank()) {
+            return List.of();
+        }
+        Pageable pageable = PageRequest.of(0, MAX_SEARCH_RESULTS);
+        return userRepository.searchByFullName(name.trim(), pageable).stream()
+                .map(userMapper::toUserSearchResultDTO)
+                .toList();
+    }
+
+    // Public-profile finding: one uniform response for GET /user/by-id, self or not. Builds
+    // friend entries directly from User (toPublicFriendDTO) - never calls MessageRepository, so
+    // the previous private-message-preview leak is closed at the query level, not merely hidden
+    // from serialization.
+    public PublicUserProfileDTO getPublicUserProfileById(int id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        List<PublicFriendDTO> friends = friendshipService.getAcceptedFriends(user).stream()
+                .map(userMapper::toPublicFriendDTO)
+                .toList();
+        return userMapper.toPublicUserProfileDTO(user, friends);
+    }
 
     private String capitalize(String input) {
         if (input == null || input.isBlank()) return input;
