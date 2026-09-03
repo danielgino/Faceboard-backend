@@ -5,12 +5,24 @@ import org.example.apimywebsite.api.model.Post;
 import org.example.apimywebsite.api.model.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
+
+    // Demo Mode: used by DemoDataSeederService to clean up a partially-seeded user's comments
+    // wherever they are - including ones left on another (still-present) seed user's post,
+    // which deleting only this user's own posts would never reach. A bulk JPQL delete (not the
+    // derived query-then-remove-each form) so it executes immediately and clearAutomatically
+    // evicts any already-loaded Comment entities from the persistence context - otherwise a
+    // later flush's FK/cascade check can still see stale references to rows that are already
+    // gone from the database.
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Comment c WHERE c.user = :user")
+    void deleteAllByUser(@Param("user") User user);
 
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.postId = :postId")
     int countCommentsByPostId(@Param("postId") Long postId);

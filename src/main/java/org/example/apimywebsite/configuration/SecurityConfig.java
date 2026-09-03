@@ -2,6 +2,7 @@ package org.example.apimywebsite.configuration;
 
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.apimywebsite.util.DemoAccessFilter;
 import org.example.apimywebsite.util.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +34,9 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
 
+    @Autowired
+    private DemoAccessFilter demoAccessFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -54,6 +58,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // Demo Mode: central deny-by-default gate for ROLE_DEMO requests (see
+                // DemoAccessFilter) - a pure no-op for every other request, so this registration
+                // alone changes nothing for real users.
+                .addFilterAfter(demoAccessFilter, JwtAuthFilter.class)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(unauthenticatedEntryPoint()))
                 .formLogin(form -> form.disable())

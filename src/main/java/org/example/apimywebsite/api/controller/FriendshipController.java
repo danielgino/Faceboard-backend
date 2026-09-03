@@ -8,6 +8,7 @@ import org.example.apimywebsite.dto.SuggestedFriendsResponseDTO;
 import org.example.apimywebsite.service.FriendshipService;
 import org.example.apimywebsite.service.UserService;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.DemoScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -84,13 +85,24 @@ public class FriendshipController {
     }
     @GetMapping("/status/{userId}/{friendId}")
     public ResponseEntity<FriendRequestDTO> checkStatus(@PathVariable int userId, @PathVariable int friendId) {
-        int currentUserId = authHelper.getCurrentUser().getId();
+        User currentUser = authHelper.getCurrentUser();
+        int currentUserId = currentUser.getId();
         if (currentUserId != userId && currentUserId != friendId) {
             return ResponseEntity.status(403).build();
         }
 
         User user = userService.findById(userId);
         User friend = userService.findById(friendId);
+
+        // Demo Mode: DemoAccessFilter's reachability allowlist only proves the caller is
+        // ROLE_DEMO and GET - the self-check above only proves the caller is one of the two
+        // parties, which for a ROLE_DEMO caller is always the shared demo_user. Neither proves
+        // the OTHER party is also Demo-owned data, so both are asserted explicitly here (same
+        // pattern as MessageService.getMessagesForConversation) - a ROLE_DEMO caller can only
+        // ever learn the relationship status between two isDemo=true users. No-ops entirely for
+        // non-demo callers.
+        DemoScope.assertAccessible(currentUser, user);
+        DemoScope.assertAccessible(currentUser, friend);
 
         FriendRequestDTO relationshipStatus = friendshipService.getRelationshipBetweenUsers(user, friend);
         return ResponseEntity.ok(relationshipStatus);

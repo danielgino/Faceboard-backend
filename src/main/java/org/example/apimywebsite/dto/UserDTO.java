@@ -29,7 +29,8 @@ import java.util.List;
         "facebookUrl",
         "instagramUrl",
         "fullName",
-        "friendsList"
+        "friendsList",
+        "demo"
 })
 public class UserDTO implements Person {
 
@@ -45,6 +46,9 @@ public class UserDTO implements Person {
     private String facebookUrl;
     private String instagramUrl;
     private List<FriendDTO> friendsList;
+    // Demo Mode: lets the frontend authoritatively learn demo status from /auth/me (UserDTO.demo
+    // in JSON, since the Lombok/Jackson boolean accessor is isDemo()) rather than inferring it.
+    private boolean demo;
 
     @Override
     @JsonProperty("fullName")

@@ -231,6 +231,7 @@ class CommentServiceTest {
 
     @Test
     void getCommentsByPostId_noParams_defaultsToPageZeroAndDefaultSize() {
+        loginAs(User.builder().id(1).build());
         when(commentRepository.findCommentsByPostIdWithUser(eq(1L), any(Pageable.class)))
                 .thenReturn(new ArrayList<>());
 
@@ -244,6 +245,7 @@ class CommentServiceTest {
 
     @Test
     void getCommentsByPostId_oversizedSize_clampedToMax() {
+        loginAs(User.builder().id(1).build());
         when(commentRepository.findCommentsByPostIdWithUser(eq(1L), any(Pageable.class)))
                 .thenReturn(new ArrayList<>());
 
@@ -256,6 +258,7 @@ class CommentServiceTest {
 
     @Test
     void getCommentsByPostId_negativePageAndSize_normalizeToDefaults() {
+        loginAs(User.builder().id(1).build());
         when(commentRepository.findCommentsByPostIdWithUser(eq(1L), any(Pageable.class)))
                 .thenReturn(new ArrayList<>());
 
@@ -269,6 +272,7 @@ class CommentServiceTest {
 
     @Test
     void getCommentsByPostId_defaultPage_returnsMostRecentBatch_inChronologicalOrder() {
+        loginAs(User.builder().id(1).build());
         // Repository returns newest-first (matches the real DESC query) - page 0 is the most
         // recent N comments, exactly like a real bounded query would produce.
         OffsetDateTime t1 = OffsetDateTime.now().minusMinutes(3);
@@ -286,6 +290,7 @@ class CommentServiceTest {
 
     @Test
     void getCommentsByPostId_subsequentPage_retrievesOlderComments() {
+        loginAs(User.builder().id(1).build());
         when(commentRepository.findCommentsByPostIdWithUser(eq(1L), any(Pageable.class)))
                 .thenReturn(new ArrayList<>(List.of(aComment(1, OffsetDateTime.now().minusDays(1)))));
 

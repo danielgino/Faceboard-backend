@@ -9,6 +9,7 @@ import org.example.apimywebsite.dto.LikeDTO;
 import org.example.apimywebsite.repository.LikeRepository;
 import org.example.apimywebsite.repository.PostRepository;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.DemoScope;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,10 @@ public class LikeService {
         this.notificationService=notificationService;
     }
     public long getLikeCountForPost(Post post) {
+        User currentUser = authHelper.getCurrentUser();
+        if (currentUser.isDemo()) {
+            DemoScope.assertAccessible(currentUser, post != null ? post.getUser() : null);
+        }
         return likeRepository.countByPost(post);
     }
     @Transactional
@@ -54,6 +59,12 @@ public class LikeService {
     // page=1, page=2, etc. This is the "Users Who Liked This Post" list only - it does not
     // affect M-DB1's grouped like-count queries or the feed's like-count/current-user-like logic.
     public List<LikeDTO> getUserLikesByPostId(Long postId, Integer page, Integer size) {
+        User currentUser = authHelper.getCurrentUser();
+        if (currentUser.isDemo()) {
+            Post post = postRepository.findById(postId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+            DemoScope.assertAccessible(currentUser, post.getUser());
+        }
         int safePage = (page == null || page < 0) ? 0 : page;
         int safeSize = (size == null || size <= 0)
                 ? DEFAULT_LIKES_PAGE_SIZE

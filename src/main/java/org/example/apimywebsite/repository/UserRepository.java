@@ -16,6 +16,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u FROM User u WHERE u.userName = :userName")
     User findByUserName(@Param("userName") String userName);
 
+    // Demo Mode: used by DemoDataSeederService to detect a partially-seeded dataset (some but
+    // not all of the fixed seed usernames present) rather than only checking demo_user alone.
+    List<User> findAllByUserNameIn(List<String> userNames);
+
     // L-DB4A: same searched fields as before (name, lastname, concatenated full name) - only
     // the addition of a deterministic ORDER BY and a Pageable parameter changed. Spring Data
     // JPA applies the Pageable as a real LIMIT/OFFSET at the SQL level, so the database itself
@@ -29,6 +33,19 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     ORDER BY u.name ASC, u.lastname ASC, u.id ASC
 """)
     List<User> searchByFullName(@Param("query") String query, Pageable pageable);
+
+    // Demo Mode: same search shape as searchByFullName above, but scoped at the query level to
+    // u.demo = true (see User.isDemo/DemoScope) - a ROLE_DEMO caller can never fetch a real user
+    // row through this method, not merely have one filtered out of the response afterward.
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.demo = true
+      AND (LOWER(u.name) LIKE LOWER(CONCAT('%', :query, '%'))
+       OR LOWER(u.lastname) LIKE LOWER(CONCAT('%', :query, '%'))
+       OR LOWER(CONCAT(u.name, ' ', u.lastname)) LIKE LOWER(CONCAT('%', :query, '%')))
+    ORDER BY u.name ASC, u.lastname ASC, u.id ASC
+""")
+    List<User> searchDemoUsersByFullName(@Param("query") String query, Pageable pageable);
 
     // SUG-002 (Suggested Friends): keyset-paginated candidate scan driven off users.id (the
     // primary key, already indexed) - no ORDER BY RAND(), no OFFSET. Excludes the caller and

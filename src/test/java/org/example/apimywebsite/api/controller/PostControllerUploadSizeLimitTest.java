@@ -5,6 +5,7 @@ import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.CloudinaryService;
 import org.example.apimywebsite.service.LikeService;
 import org.example.apimywebsite.service.PostService;
+import org.example.apimywebsite.util.InMemoryRateLimiter;
 import org.example.apimywebsite.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,10 @@ class PostControllerUploadSizeLimitTest {
     // explicitly, matching every other @WebMvcTest slice in this suite.
     @MockBean
     private JwtUtil jwtUtil;
+    // Demo Mode: DemoAccessFilter (a Filter, so swept into this slice's beans even though
+    // addFilters=false means it never actually runs) needs this to be constructable.
+    @MockBean
+    private InMemoryRateLimiter rateLimiter;
 
     @Test
     void addPost_multipleValidSmallImages_remainsCompatible_andReachesCloudinaryForEach() throws Exception {

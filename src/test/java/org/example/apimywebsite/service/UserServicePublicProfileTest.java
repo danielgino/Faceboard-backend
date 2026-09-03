@@ -8,6 +8,7 @@ import org.example.apimywebsite.dto.UserSearchResultDTO;
 import org.example.apimywebsite.mapper.UserMapper;
 import org.example.apimywebsite.repository.MessageRepository;
 import org.example.apimywebsite.repository.UserRepository;
+import org.example.apimywebsite.util.AuthHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,8 @@ class UserServicePublicProfileTest {
     private MessageRepository messageRepository;
     @Mock
     private FriendshipService friendshipService;
+    @Mock
+    private AuthHelper authHelper;
 
     private UserService userService;
 
@@ -60,10 +63,19 @@ class UserServicePublicProfileTest {
         ReflectionTestUtils.setField(userService, "userMapper", userMapper);
         ReflectionTestUtils.setField(userService, "messageRepository", messageRepository);
         ReflectionTestUtils.setField(userService, "friendshipService", friendshipService);
+        ReflectionTestUtils.setField(userService, "authHelper", authHelper);
+    }
+
+    // Demo Mode: DemoScope.assertAccessible/the demo-search branch both call
+    // authHelper.getCurrentUser() - a plain non-demo caller so every existing test here keeps
+    // exercising the real (non-demo) code path unchanged.
+    private void loginAsRegularUser() {
+        when(authHelper.getCurrentUser()).thenReturn(User.builder().id(1).userName("caller").build());
     }
 
     @Test
     void getPublicUserProfileById_neverInteractsWithMessageRepository() {
+        loginAsRegularUser();
         User target = User.builder().id(TARGET_ID).userName("bob").build();
         when(userRepository.findById(TARGET_ID)).thenReturn(Optional.of(target));
         when(friendshipService.getAcceptedFriends(target)).thenReturn(List.of());
@@ -77,6 +89,7 @@ class UserServicePublicProfileTest {
 
     @Test
     void getPublicUserProfileById_buildsFriendsViaPublicFriendMapping_notMessageEnrichedMapping() {
+        loginAsRegularUser();
         User target = User.builder().id(TARGET_ID).userName("bob").build();
         User friend = User.builder().id(9).userName("carol").build();
         when(userRepository.findById(TARGET_ID)).thenReturn(Optional.of(target));
@@ -94,6 +107,7 @@ class UserServicePublicProfileTest {
 
     @Test
     void searchUsersByName_returnsSearchResultDTOs_notFullUserDTO() {
+        loginAsRegularUser();
         User match = User.builder().id(TARGET_ID).userName("bob").build();
         when(userRepository.searchByFullName(eq("bob"), any(Pageable.class))).thenReturn(List.of(match));
         UserSearchResultDTO resultDto = new UserSearchResultDTO();
@@ -111,6 +125,7 @@ class UserServicePublicProfileTest {
 
     @Test
     void searchUsersByName_passesBoundedPageable_cappedAtTwenty() {
+        loginAsRegularUser();
         when(userRepository.searchByFullName(eq("bob"), any(Pageable.class))).thenReturn(List.of());
 
         userService.searchUsersByName("bob");

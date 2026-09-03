@@ -9,6 +9,7 @@ import org.example.apimywebsite.enums.Gender;
 import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.UserService;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.InMemoryRateLimiter;
 import org.example.apimywebsite.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +68,10 @@ class UserControllerPublicProfileTest {
     // explicitly, matching every other @WebMvcTest slice in this suite.
     @MockBean
     private JwtUtil jwtUtil;
+    // Demo Mode: DemoAccessFilter (a Filter, so swept into this slice's beans even though
+    // addFilters=false means it never actually runs) needs this to be constructable.
+    @MockBean
+    private InMemoryRateLimiter rateLimiter;
 
     private PublicUserProfileDTO fullyPopulatedProfile(int id) {
         PublicFriendDTO friend = new PublicFriendDTO();

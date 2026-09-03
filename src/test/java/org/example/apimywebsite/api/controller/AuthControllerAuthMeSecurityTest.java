@@ -9,6 +9,7 @@ import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.PasswordResetService;
 import org.example.apimywebsite.service.UserService;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.InMemoryRateLimiter;
 import org.example.apimywebsite.util.JwtUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,11 @@ class AuthControllerAuthMeSecurityTest {
     private JwtUtil jwtUtil;
     @MockBean
     private PasswordResetService passwordResetService;
+    // Demo Mode: AuthController.demoLogin now depends on this directly, and SecurityConfig's
+    // DemoAccessFilter (a Filter, auto-scanned into this @WebMvcTest slice like JwtAuthFilter
+    // already is) needs it too - either way the context can't load without it.
+    @MockBean
+    private InMemoryRateLimiter rateLimiter;
 
     @AfterEach
     void clearSecurityContext() {

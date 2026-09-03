@@ -8,7 +8,10 @@ import org.example.apimywebsite.dto.*;
 import org.example.apimywebsite.mapper.UserMapper;
 import org.example.apimywebsite.repository.MessageRepository;
 import org.example.apimywebsite.repository.UserRepository;
+import org.example.apimywebsite.util.AuthHelper;
 import org.example.apimywebsite.util.Constants;
+import org.example.apimywebsite.util.DemoDataSeeder;
+import org.example.apimywebsite.util.DemoScope;
 import org.example.apimywebsite.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +44,14 @@ public class UserService {
     private FriendshipService friendshipService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private AuthHelper authHelper;
+
+    // Demo Mode: short-lived tokens (vs. the normal 1-hour default) so a leaked/scraped demo
+    // token has a small useful window.
+    private static final long DEMO_TOKEN_TTL_MILLIS = 900_000; // 15 minutes
+    private static final int DEMO_SEARCH_MIN_LENGTH = 2;
+    private static final int DEMO_MAX_SEARCH_RESULTS = 10;
 
     public UserService(UserRepository userRepository, CloudinaryService cloudinaryService) {
         this.userRepository = userRepository;
@@ -84,13 +95,28 @@ public String loginByEmail(String email, String password) {
     }
 
     User user = userRepository.findByEmail(email);
-    if (user == null) {
+    // Demo Mode: seeded demo accounts (isDemo=true) are only ever reachable through
+    // POST /auth/demo, never through normal email/password login - same generic response as any
+    // other invalid credential, so a demo account's existence isn't distinguishable this way.
+    if (user == null || user.isDemo()) {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
     if (!passwordEncoder.matches(password, user.getPassword())) {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }return jwtUtil.generateToken(user.getUserName(), user.getPassword());
 }
+
+    // Demo Mode: issues a token for the single shared, seeded demo_user - never checks a
+    // password (there is no legitimate path to reach this account otherwise). Returns null if
+    // the seeder hasn't populated the demo dataset yet (e.g. Demo Mode just enabled, seeding
+    // still pending on this boot), which the caller turns into a 503.
+    public String loginAsDemo() {
+        User demoUser = userRepository.findByUserName(DemoDataSeeder.DEMO_USERNAME);
+        if (demoUser == null || !demoUser.isDemo()) {
+            return null;
+        }
+        return jwtUtil.generateDemoToken(demoUser.getUserName(), demoUser.getPassword(), DEMO_TOKEN_TTL_MILLIS);
+    }
 
     public void register(RegisterDTO dto) {
         if (userRepository.findByUserName(dto.getUsername()) != null) {
@@ -189,6 +215,7 @@ public String loginByEmail(String email, String password) {
 
     public UserFriendsDTO getFriendsPageByUserId(int userId, int page, int size, String query) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        DemoScope.assertAccessible(authHelper.getCurrentUser(), user);
 
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), MAX_FRIENDS_PAGE_SIZE);
@@ -267,8 +294,23 @@ public String loginByEmail(String email, String password) {
         if (name == null || name.isBlank()) {
             return List.of();
         }
+        String trimmed = name.trim();
+
+        // Demo Mode: structurally scoped at the query level - a demo session can never even
+        // fetch a real user row here, not just have one filtered out afterward. Slightly
+        // tighter caps than the real search, appropriate for the tiny seed dataset.
+        if (authHelper.getCurrentUser().isDemo()) {
+            if (trimmed.length() < DEMO_SEARCH_MIN_LENGTH) {
+                return List.of();
+            }
+            Pageable demoPageable = PageRequest.of(0, DEMO_MAX_SEARCH_RESULTS);
+            return userRepository.searchDemoUsersByFullName(trimmed, demoPageable).stream()
+                    .map(userMapper::toUserSearchResultDTO)
+                    .toList();
+        }
+
         Pageable pageable = PageRequest.of(0, MAX_SEARCH_RESULTS);
-        return userRepository.searchByFullName(name.trim(), pageable).stream()
+        return userRepository.searchByFullName(trimmed, pageable).stream()
                 .map(userMapper::toUserSearchResultDTO)
                 .toList();
     }
@@ -280,6 +322,7 @@ public String loginByEmail(String email, String password) {
     public PublicUserProfileDTO getPublicUserProfileById(int id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        DemoScope.assertAccessible(authHelper.getCurrentUser(), user);
         List<PublicFriendDTO> friends = friendshipService.getAcceptedFriends(user).stream()
                 .map(userMapper::toPublicFriendDTO)
                 .toList();

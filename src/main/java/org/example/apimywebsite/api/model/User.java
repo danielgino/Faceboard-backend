@@ -62,6 +62,13 @@ public class User {
     @Column(name = "profile_picture_url", length = 255)
     private String profilePictureUrl;
 
+    // Demo Mode: the sole membership signal for the public, read-only Demo dataset (see
+    // util/DemoScope.java) - true only for the seeded demo_user and its seed friends. Field is
+    // named "demo" (not "isDemo") so the Lombok-generated accessors read naturally as
+    // user.isDemo()/user.setDemo(boolean) instead of the "is" prefix doubling up.
+    @Column(name = "is_demo", nullable = false)
+    private boolean demo;
+
     // M-DUP2: the redundant, status-unaware @ManyToMany friends mapping (previously here,
     // @JoinTable(name = "friends", user_id/friend_id) - the same physical table/columns as
     // Friends/FriendshipRepository) was removed. It had zero production consumers and was
