@@ -4,6 +4,7 @@ import org.example.apimywebsite.api.model.Post;
 import org.example.apimywebsite.api.model.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +12,17 @@ import java.util.List;
 
 public interface LikeRepository extends JpaRepository<Like, Long> {
         void deleteByPost_PostIdAndUser_Id(long postId, long userId);
+
+        // Demo Mode: used by DemoDataSeederService to clean up a partially-seeded user's likes
+        // wherever they are - including ones left on another (still-present) seed user's post,
+        // which deleting only this user's own posts would never reach. A bulk JPQL delete (not
+        // the derived query-then-remove-each form) so it executes immediately and
+        // clearAutomatically evicts any already-loaded Like entities from the persistence
+        // context - otherwise a later flush's FK/cascade check can still see stale references
+        // to rows that are already gone from the database.
+        @Modifying(clearAutomatically = true)
+        @Query("DELETE FROM Like l WHERE l.user = :user")
+        void deleteAllByUser(@Param("user") User user);
 
         boolean existsByPost_PostIdAndUser_Id(Long postId, int userid);
         long countByPost(Post post);

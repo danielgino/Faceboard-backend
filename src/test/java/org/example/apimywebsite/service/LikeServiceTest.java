@@ -142,6 +142,7 @@ class LikeServiceTest {
 
     @Test
     void getUserLikesByPostId_noParams_defaultsToPageZeroAndDefaultSize() {
+        when(authHelper.getCurrentUser()).thenReturn(User.builder().id(1).build());
         when(likeRepository.findByPostIdWithUser(eq(1L), any(Pageable.class)))
                 .thenReturn(new ArrayList<>());
 
@@ -155,6 +156,7 @@ class LikeServiceTest {
 
     @Test
     void getUserLikesByPostId_oversizedSize_clampedToMax() {
+        when(authHelper.getCurrentUser()).thenReturn(User.builder().id(1).build());
         when(likeRepository.findByPostIdWithUser(eq(1L), any(Pageable.class)))
                 .thenReturn(new ArrayList<>());
 
@@ -167,6 +169,7 @@ class LikeServiceTest {
 
     @Test
     void getUserLikesByPostId_subsequentPage_retrievesMoreLikers() {
+        when(authHelper.getCurrentUser()).thenReturn(User.builder().id(1).build());
         User olderLiker = User.builder().id(42).userName("bob").name("Bob").lastname("B").build();
         when(likeRepository.findByPostIdWithUser(eq(1L), any(Pageable.class)))
                 .thenReturn(new ArrayList<>(List.of(aLike(olderLiker))));
@@ -181,6 +184,7 @@ class LikeServiceTest {
 
     @Test
     void getUserLikesByPostId_preservesExistingDTOShape() {
+        when(authHelper.getCurrentUser()).thenReturn(User.builder().id(1).build());
         User liker = User.builder().id(7).userName("carol").name("Carol").lastname("C")
                 .profilePictureUrl("http://example.com/pic.png").build();
         when(likeRepository.findByPostIdWithUser(eq(1L), any(Pageable.class)))

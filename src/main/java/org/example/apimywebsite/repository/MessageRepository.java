@@ -24,6 +24,14 @@ public interface MessageRepository extends JpaRepository<Message, Integer> {
     List<Message> findMessagesBetweenUsers(int userId, int friendId, org.springframework.data.domain.Pageable pageable);
     List<Message> findBySenderIdAndReceiverIdAndIsReadFalse(int senderId, int receiverId);
 
+    // Demo Mode: used by DemoDataSeederService to clean up a partially-seeded user's messages
+    // (either direction) before re-seeding, inside the same transaction. clearAutomatically is
+    // required (not optional): a bulk JPQL DELETE bypasses the persistence context, so without
+    // it any already-loaded Message entities stay in the L1 cache as stale references.
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Message m WHERE m.sender = :user OR m.receiver = :user")
+    void deleteAllBySenderOrReceiver(@Param("user") User user);
+
     @Query("""
     SELECT m.sender.id AS senderId, COUNT(m) AS cnt
     FROM Message m

@@ -78,6 +78,14 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
                 if (username != null && jwtUtil.isTokenValid(token, username)) {
                     User user = userService.findByUserName(username);
+                    // Demo Mode: no WebSocket session at all for ROLE_DEMO - rejected the same
+                    // way as a missing/invalid Authorization header (SEC-004 fix below), not
+                    // merely restricted at SUBSCRIBE/SEND. Simpler and smaller surface than
+                    // allowing CONNECT and gating individual frames: there's never a session to
+                    // subscribe or send from.
+                    if (user != null && user.isDemo()) {
+                        throw new MessagingException("Invalid authentication credentials");
+                    }
                     // SEC-005 fix: matchesCurrentPassword rejects a token issued before the
                     // user's password was last changed/reset, mirroring JwtAuthFilter's REST check.
                     if (user != null && jwtUtil.matchesCurrentPassword(token, user.getPassword())) {

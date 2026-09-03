@@ -6,6 +6,7 @@ import org.example.apimywebsite.dto.UserDTO;
 import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.UserService;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.InMemoryRateLimiter;
 import org.example.apimywebsite.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +81,10 @@ class SecurityConfigHttpBasicTest {
     private UserRepository userRepository;
     @MockBean
     private JwtUtil jwtUtil;
+    // Demo Mode: DemoAccessFilter (a Filter, so auto-scanned into this @WebMvcTest slice like
+    // JwtAuthFilter already is) needs this dependency satisfied for the context to load at all.
+    @MockBean
+    private InMemoryRateLimiter rateLimiter;
 
     private static String basic(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());

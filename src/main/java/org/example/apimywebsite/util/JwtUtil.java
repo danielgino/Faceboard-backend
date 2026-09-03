@@ -17,6 +17,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 
 // L-OOP4: plain component-scanned bean instead of a manually-written @Bean factory method
 // (previously in WebConfig, now removed - it did nothing but call `new JwtUtil(secret)`). Spring
@@ -73,6 +74,25 @@ private final byte[] fingerprintKey;
                 .expiration(new Date(System.currentTimeMillis() + 3600000)) //hour token
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
+    }
+
+    // Demo Mode: distinct from generateToken - a short, caller-specified TTL (vs. the fixed
+    // 1-hour default) and a random `jti` claim, so DemoAccessFilter can rate-limit per issued
+    // token rather than per shared demo_user subject (many simultaneous public visitors share
+    // that one identity).
+    public String generateDemoToken(String username, String currentPasswordHash, long ttlMillis) {
+        return Jwts.builder()
+                .subject(username)
+                .id(UUID.randomUUID().toString())
+                .claim("pwdFp", passwordFingerprint(currentPasswordHash))
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + ttlMillis))
+                .signWith(secretKey, Jwts.SIG.HS256)
+                .compact();
+    }
+
+    public String extractJti(String token) {
+        return parseToken(token).getId();
     }
 
     // Keyed HMAC-SHA256 of the bcrypt hash, never the bcrypt hash itself.

@@ -6,6 +6,7 @@ import org.example.apimywebsite.dto.MessageDTO;
 import org.example.apimywebsite.exception.MessageParticipantNotFoundException;
 import org.example.apimywebsite.repository.MessageRepository;
 import org.example.apimywebsite.repository.UserRepository;
+import org.example.apimywebsite.util.AuthHelper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,6 +47,13 @@ class MessageServiceTest {
     private UserRepository userRepository;
     @Mock
     private SimpMessagingTemplate messagingTemplate;
+    // Demo Mode: getMessagesForConversation now resolves the caller via AuthHelper for its
+    // demo-scoping check. Left unstubbed in every existing test here deliberately -
+    // DemoScope.assertAccessible(null, ...) no-ops safely for a null/non-demo caller, so these
+    // pre-existing non-demo-focused tests need no behavior change beyond this mock existing
+    // (without it, @InjectMocks would leave the field null and NPE on the first call).
+    @Mock
+    private AuthHelper authHelper;
 
     @InjectMocks
     private MessageService messageService;
@@ -173,6 +182,40 @@ class MessageServiceTest {
         assertEquals(List.of(1, 2, 3), result.stream().map(MessageDTO::getId).toList());
         assertEquals(t1, result.get(0).getSentTime());
         assertEquals(t3, result.get(2).getSentTime());
+    }
+
+    // ---- Demo Mode: both participants must be isDemo=true for a ROLE_DEMO caller ----
+
+    @Test
+    void getMessagesForConversation_demoCaller_bothParticipantsDemo_isAllowed() {
+        User demoUser = User.builder().id(1).demo(true).build();
+        User demoFriend = User.builder().id(2).demo(true).build();
+        when(userRepository.findById(1)).thenReturn(Optional.of(demoUser));
+        when(userRepository.findById(2)).thenReturn(Optional.of(demoFriend));
+        when(authHelper.getCurrentUser()).thenReturn(demoUser);
+        when(messageRepository.findMessagesBetweenUsers(eq(1), eq(2), any())).thenReturn(List.of());
+
+        List<MessageDTO> result = messageService.getMessagesForConversation(1, 2, null, null);
+
+        assertEquals(List.of(), result);
+    }
+
+    @Test
+    void getMessagesForConversation_demoCaller_otherParticipantNotDemo_isDenied() {
+        // Simulates a demo token manually changed to point at a real (non-demo) user's id -
+        // must never expose that conversation's content, even though the controller's own
+        // ownership check (caller is one of {userId, otherUserId}) is already satisfied.
+        User demoUser = User.builder().id(1).demo(true).build();
+        User realUser = User.builder().id(2).demo(false).build();
+        when(userRepository.findById(1)).thenReturn(Optional.of(demoUser));
+        when(userRepository.findById(2)).thenReturn(Optional.of(realUser));
+        when(authHelper.getCurrentUser()).thenReturn(demoUser);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> messageService.getMessagesForConversation(1, 2, null, null));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verify(messageRepository, never()).findMessagesBetweenUsers(anyInt(), anyInt(), any());
     }
 
     // ---- sendMessage (shared REST+STOMP site): dedicated, transport-agnostic exception ----

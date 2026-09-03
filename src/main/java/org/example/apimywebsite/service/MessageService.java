@@ -9,6 +9,8 @@ import org.example.apimywebsite.exception.MessageParticipantNotFoundException;
 import org.example.apimywebsite.repository.MessageRepository;
 import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.util.ActiveChatTracker;
+import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.DemoScope;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AuthHelper authHelper;
 
     // H8b: uses a dedicated, transport-agnostic MessageParticipantNotFoundException (not
     // ResponseStatusException) because this method is shared by a REST endpoint
@@ -74,6 +77,15 @@ public class MessageService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         User otherUser = userRepository.findById(otherUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Other user not found"));
+        // Demo Mode: the controller's ownership check already guarantees the caller is one of
+        // {userId, otherUserId}, so for a ROLE_DEMO caller that's always the seeded demo_user -
+        // this additionally requires the OTHER participant to be isDemo=true too, closing the
+        // one gap ownership alone doesn't: a real user is free to message demo_user (nothing
+        // prevents that), and without this check demo_user's own conversation with that real
+        // user would otherwise be readable through this same endpoint.
+        User currentUser = authHelper.getCurrentUser();
+        DemoScope.assertAccessible(currentUser, user);
+        DemoScope.assertAccessible(currentUser, otherUser);
 
         int safePage = (page == null || page < 0) ? 0 : page;
         int safeSize = (size == null || size <= 0)

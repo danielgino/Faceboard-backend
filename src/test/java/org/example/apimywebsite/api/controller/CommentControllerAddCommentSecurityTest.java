@@ -71,6 +71,8 @@ class CommentControllerAddCommentSecurityTest {
     private NotificationService notificationService;
     @MockBean
     private JwtUtil jwtUtil; // never exercised (addFilters=false), only needed to construct JwtAuthFilter's bean
+    @MockBean
+    private org.example.apimywebsite.util.InMemoryRateLimiter rateLimiter; // same reason, for DemoAccessFilter's bean
 
     private static final String MALICIOUS_PAYLOAD = """
             {

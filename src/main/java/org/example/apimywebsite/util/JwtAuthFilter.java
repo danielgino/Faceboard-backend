@@ -53,12 +53,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     // validly signed, unexpired token for this username.
                     if (user != null && jwtUtil.isTokenValid(token, username)
                             && jwtUtil.matchesCurrentPassword(token, user.getPassword())) {
+                        // Demo Mode: the seeded demo_user (and only that account) gets ROLE_DEMO
+                        // instead of ROLE_USER - every other authenticated request is completely
+                        // unaffected, since user.isDemo() defaults to false for every real row.
+                        String authority = user.isDemo() ? "ROLE_DEMO" : "ROLE_USER";
                         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                                 username, null,
-                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                List.of(new SimpleGrantedAuthority(authority))
                         );
                         SecurityContextHolder.getContext().setAuthentication(auth);
-                        SecurityContextHolder.getContext().setAuthentication(auth);
+                        if (user.isDemo()) {
+                            // DemoAccessFilter (registered right after this filter) rate-limits
+                            // per issued token rather than per shared identity - stash the jti
+                            // here so it doesn't need to re-parse the token itself.
+                            request.setAttribute("demoJti", jwtUtil.extractJti(token));
+                        }
                     }
                 }
             } catch (JwtException | IllegalArgumentException e) {

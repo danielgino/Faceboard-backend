@@ -3,6 +3,7 @@ package org.example.apimywebsite.api.controller;
 import org.example.apimywebsite.configuration.SecurityConfig;
 import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.CommentService;
+import org.example.apimywebsite.util.InMemoryRateLimiter;
 import org.example.apimywebsite.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,10 @@ class CommentControllerAddCommentAuthenticationTest {
     private UserRepository userRepository;
     @MockBean
     private JwtUtil jwtUtil;
+    // Demo Mode: DemoAccessFilter (a Filter, so auto-scanned into this @WebMvcTest slice like
+    // JwtAuthFilter already is) needs this dependency satisfied for the context to load at all.
+    @MockBean
+    private InMemoryRateLimiter rateLimiter;
 
     @Test
     void addComment_unauthenticated_isBlocked() throws Exception {

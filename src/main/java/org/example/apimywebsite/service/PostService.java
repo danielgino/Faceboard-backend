@@ -6,6 +6,7 @@ import org.example.apimywebsite.dto.PostDTO;
 import org.example.apimywebsite.mapper.PostMapper;
 import org.example.apimywebsite.repository.*;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.DemoScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -140,6 +141,11 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
         User currentUser = authHelper.getCurrentUser();
         Pageable pageable = safePageable(page, size, DEFAULT_WALL_PAGE_SIZE, MAX_WALL_PAGE_SIZE);
         List<Post> posts = postRepository.findAllPostsWithImagesByUserId(userId, pageable);
+        // Demo Mode: every post in this page shares the same owner (queried by userId), so
+        // checking the first is sufficient - an empty page leaks nothing regardless of ownership.
+        if (currentUser.isDemo() && !posts.isEmpty()) {
+            DemoScope.assertAccessible(currentUser, posts.get(0).getUser());
+        }
         return toDTOsWithCounts(posts, currentUser.getId());
     }
 
@@ -242,6 +248,7 @@ public PostDTO addPost(Post post, List<String> imageUrls) {
         User currentUser = authHelper.getCurrentUser();
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        DemoScope.assertAccessible(currentUser, post.getUser());
 
         int likeCount = likeRepository.countLikesByPostId(post.getPostId());
         int commentCount = commentRepository.countCommentsByPostId(post.getPostId());

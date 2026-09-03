@@ -221,4 +221,43 @@ class FriendshipControllerTest {
         assertEquals(403, response.getStatusCode().value());
         verifyNoInteractions(friendshipService);
     }
+
+    // ---- checkStatus: Demo Mode dataset isolation ----
+    // DemoAccessFilter's reachability allowlist proves the caller is ROLE_DEMO and GET; these
+    // tests cover what it can't - that the actual relationship data returned is confined to
+    // isDemo=true users on BOTH sides, via DemoScope in the controller itself.
+
+    @Test
+    void checkStatus_demoCaller_bothPartiesDemo_isAllowed() {
+        User demoCaller = User.builder().id(USER_A).demo(true).build();
+        User demoFriend = User.builder().id(USER_B).demo(true).build();
+        when(authHelper.getCurrentUser()).thenReturn(demoCaller);
+        when(userService.findById(USER_A)).thenReturn(demoCaller);
+        when(userService.findById(USER_B)).thenReturn(demoFriend);
+        when(friendshipService.getRelationshipBetweenUsers(demoCaller, demoFriend))
+                .thenReturn(new FriendRequestDTO(USER_A, USER_B, "ACCEPTED"));
+
+        ResponseEntity<FriendRequestDTO> response = controller.checkStatus(USER_A, USER_B);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals("ACCEPTED", response.getBody().getStatus());
+    }
+
+    @Test
+    void checkStatus_demoCaller_otherPartyNotDemo_isDenied() {
+        // Manually changing the path id to a real (non-demo) user's id must never leak whether
+        // any relationship exists with them - the self-check alone would otherwise let this
+        // through, since the demo caller IS one of the two parties.
+        User demoCaller = User.builder().id(USER_A).demo(true).build();
+        User realUser = User.builder().id(USER_B).demo(false).build();
+        when(authHelper.getCurrentUser()).thenReturn(demoCaller);
+        when(userService.findById(USER_A)).thenReturn(demoCaller);
+        when(userService.findById(USER_B)).thenReturn(realUser);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> controller.checkStatus(USER_A, USER_B));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        verifyNoInteractions(friendshipService);
+    }
 }

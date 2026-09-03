@@ -2,6 +2,7 @@ package org.example.apimywebsite.repository;
 
 import org.example.apimywebsite.api.model.Notification;
 import org.example.apimywebsite.api.model.Post;
+import org.example.apimywebsite.api.model.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,6 +41,16 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
 
     void deleteByPost(Post post);
+
+    // Demo Mode: used by DemoDataSeederService to clean up a partially-seeded user's
+    // notifications before re-seeding - as receiver, as sender, or referencing one of their
+    // posts. Uses an IN-subquery (not a path-navigation join on the nullable `post` association)
+    // specifically so rows with post = NULL are still correctly evaluated by the
+    // receiver/sender OR-branches instead of being silently excluded by an implicit inner join.
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Notification n WHERE n.receiver = :user OR n.sender = :user " +
+            "OR n.post IN (SELECT p FROM Post p WHERE p.user = :user)")
+    void deleteAllInvolvingUser(@Param("user") User user);
 
 
 }

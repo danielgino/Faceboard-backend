@@ -8,6 +8,7 @@ import org.example.apimywebsite.dto.CommentDTO;
 import org.example.apimywebsite.repository.CommentRepository;
 import org.example.apimywebsite.repository.PostRepository;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.DemoScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +53,12 @@ public class CommentService {
     // remain retrievable via page=1, page=2, etc., each individually returned in chronological
     // order for the frontend to prepend.
     public List<CommentDTO> getCommentsByPostId(Long postId, Integer page, Integer size) {
+        User currentUser = authHelper.getCurrentUser();
+        if (currentUser.isDemo()) {
+            Post post = postRepository.findById(postId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+            DemoScope.assertAccessible(currentUser, post.getUser());
+        }
         int safePage = (page == null || page < 0) ? 0 : page;
         int safeSize = (size == null || size <= 0)
                 ? DEFAULT_COMMENTS_PAGE_SIZE

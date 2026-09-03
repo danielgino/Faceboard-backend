@@ -4,6 +4,7 @@ import org.example.apimywebsite.api.model.User;
 import org.example.apimywebsite.repository.UserRepository;
 import org.example.apimywebsite.service.UserService;
 import org.example.apimywebsite.util.AuthHelper;
+import org.example.apimywebsite.util.InMemoryRateLimiter;
 import org.example.apimywebsite.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +67,10 @@ class UserControllerUploadSizeLimitTest {
     // comment that used to sit here) must now be mocked explicitly.
     @MockBean
     private JwtUtil jwtUtil;
+    // Demo Mode: DemoAccessFilter (a Filter, so swept into this slice's beans even though
+    // addFilters=false means it never actually runs) needs this to be constructable.
+    @MockBean
+    private InMemoryRateLimiter rateLimiter;
 
     @Test
     void uploadProfilePicture_fileAtConfiguredLimit_isAccepted_andReachesService() throws Exception {
