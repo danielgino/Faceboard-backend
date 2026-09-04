@@ -1,3 +1,5 @@
+<img width="400" height="400" alt="445950697-f5783ee3-9716-4606-ac48-422ba553cd1a" src="https://github.com/user-attachments/assets/14cada39-556e-40e9-9768-ba984f8a75d4" />
+
 # Faceboard
 
 Faceboard is a full-stack social network built with a React frontend and a Spring Boot backend. It covers the core of a social app — posts, friendships, stories, notifications, and real-time one-to-one chat over WebSocket — backed by MySQL and Cloudinary for media storage. It also ships with a public, read-only demo account so anyone can explore it without creating a real account.
