@@ -7,6 +7,8 @@ This repository is the backend — REST + WebSocket API, business logic and secu
 
 ## Live Demo
 <img width="400" height="400" alt="445950697-f5783ee3-9716-4606-ac48-422ba553cd1a" src="https://github.com/user-attachments/assets/14cada39-556e-40e9-9768-ba984f8a75d4" />
+
+
 Frontend: [faceboard-frontend.vercel.app](https://faceboard-frontend.vercel.app)
 <!-- TODO: add a few screenshots (feed, chat, demo banner) here -->
 
