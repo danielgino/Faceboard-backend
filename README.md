@@ -1,4 +1,5 @@
 
+
 # Faceboard
 
 Faceboard is a full-stack social network built with a React frontend and a Spring Boot backend. It covers the core of a social app — posts, friendships, stories, notifications, and real-time one-to-one chat over WebSocket — backed by MySQL and Cloudinary for media storage. It also ships with a public, read-only demo account so anyone can explore it without creating a real account.
@@ -6,7 +7,7 @@ Faceboard is a full-stack social network built with a React frontend and a Sprin
 This repository is the backend — REST + WebSocket API, business logic and security. The React client lives in `Faceboard-frontend`.
 
 ## Live Demo
-<img width="400" height="400" alt="445950697-f5783ee3-9716-4606-ac48-422ba553cd1a" src="https://github.com/user-attachments/assets/14cada39-556e-40e9-9768-ba984f8a75d4" />
+<img width="651" height="361" alt="FACEBOARD" src="https://github.com/user-attachments/assets/7ea74fcd-e0d9-4377-b358-3ac74f903be8" />
 
 
 Frontend: [faceboard-frontend.vercel.app](https://faceboard-frontend.vercel.app)
