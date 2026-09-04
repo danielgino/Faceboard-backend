@@ -1,104 +1,183 @@
+# Faceboard
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/f5783ee3-9716-4606-ac48-422ba553cd1a" alt="Facrboard React Project" width="550"/>
-</p>
+Faceboard is a full-stack social network built with a React frontend and a Spring Boot backend. It covers the core of a social app — posts, friendships, stories, notifications, and real-time one-to-one chat over WebSocket — backed by MySQL and Cloudinary for media storage. It also ships with a public, read-only demo account so anyone can explore it without creating a real account.
 
-# 🌐 Faceboard – Social Network Backend
+This repository is the backend — REST + WebSocket API, business logic and security. The React client lives in `Faceboard-frontend`.
 
-A robust **Spring Boot backend** for a modern social networking platform.  
-This service powers features such as authentication, posts, comments, likes, friendships, real-time chat, notifications, stories, and profile management.  
----
-## **Live demo:** [https://faceboard-frontend.vercel.app](https://faceboard-frontend.vercel.app)
- 
+## Live Demo
 
-## 🚀 Features
+Frontend: [faceboard-frontend.vercel.app](https://faceboard-frontend.vercel.app)
+<!-- TODO: add a few screenshots (feed, chat, demo banner) here -->
 
-- 🔑 **Authentication & Authorization**
-  - Secure login & registration with **JWT tokens**  
-  - Role-based access control (Spring Security)  
-  - Password encryption with **BCrypt**  
+Click **Demo** on the login page for a temporary, shared demo account — no signup required. It's read-only: the backend rejects write requests regardless of what the UI shows. See [Demo Mode](#demo-mode) for details.
 
-- 📝 **Social Networking Core**
-  - Posts with images (**Cloudinary integration**)  
-  - Likes, comments, and stories  
-  - Friend requests & friendship management  
+## Features
 
-- 💬 **Messaging & Notifications**
-  - Real-time chat with **WebSockets (STOMP over SockJS)**  
-  - Online user tracking (`ActiveChatTracker`)  
-  - Instant notifications (unread indicator & mark-as-read)  
+**Social**
+- Text and image posts (up to 4 images per post), with editing and deleting
+- Likes and comments
+- Feed with infinite scroll, plus a per-user photo gallery
+- Post links that can be copied or shared directly into a chat
 
-- 👤 **Profile Management**
-  - Editable user profiles (bio, profile picture, social links)  
-  - Password reset via email (**MailService**)  
+**Friends**
+- User search and suggested friends
+- Friend requests — send, accept, decline, cancel — and unfriending
+- Friends list
 
-- 🔐 **Security**
-  - Spring Security with **JWT filters**  
-  - Token-based request validation  
-  - Global exception handling  
+**Messaging & Notifications**
+- Real-time one-to-one chat with persisted history and read receipts
+- Real-time notifications for friend requests, acceptances, likes and comments
 
----
+**Stories** — upload and view, with automatic 24-hour expiry
 
-## 🛠️ Tech Stack
+**Account** — profile editing, avatar upload, password change, email-based password reset
 
-| Layer             | Technologies |
-|-------------------|--------------|
-| **Backend**       | Spring Boot (Java 17+) |
-| **Security**      | Spring Security, JWT |
-| **Database**      | JPA/Hibernate + (MySQL) |
-| **ORM Entities**  | User, Post, Comment, Like, Message, Notification, Friendship, Story |
-| **Build Tool**    | Maven |
-| **Cloud Storage** | Cloudinary (images) |
-| **Real-Time**     | WebSockets (STOMP over SockJS) |
-| **Mailing**       | JavaMailSender |
-| **DTO & Mapping** | DTOs + Mappers (no manual getters/setters) |
-| **Validation**    | Bean Validation (Jakarta Validation) |
-| **Testing**       | JUnit |
+**UI** — responsive layout with separate desktop and mobile navigation
 
----
+## Technical Highlights
 
-## 📂 Project Structure
+- **JWT-authenticated STOMP chat** — WebSocket connections require a valid JWT on CONNECT, with per-user topic authorization and persisted read receipts.
+- **Backend-enforced demo mode** — read-only restrictions on the demo account are enforced server-side (endpoint filtering, service-layer checks, WebSocket rejection), not just disabled UI buttons.
+- **JWT invalidation on password change** — tokens embed a fingerprint of the current password hash, so a password change or reset invalidates every prior token instantly, with no revocation list needed.
+- **Deterministic friend suggestions** — keyset pagination with a daily-rotating per-user seed, excluding existing and pending friends at the query level, instead of `ORDER BY RAND()`.
+- **Decoder-based image validation** — uploads are decoded and checked against their declared content type and pixel limits before reaching Cloudinary.
+- **Atomic password reset** — reset tokens are hashed, time-limited, and consumed atomically to close the race between two concurrent reset attempts.
+- **Commit-aware broadcasts** — WebSocket events for new posts and notifications fire only after the database transaction that created them commits.
+
+## Tech Stack
+
+**Frontend** — React 18, React Router, Tailwind CSS, styled-components, STOMP.js (`@stomp/stompjs`) for the WebSocket client, ChatScope UI kit for chat, Jest / React Testing Library.
+
+**Backend** — Java 17, Spring Boot 3.4, Spring Security, Spring Data JPA/Hibernate, Spring WebSocket/STOMP, MySQL, Flyway, JWT (jjwt), MapStruct, Cloudinary SDK.
+
+**Infrastructure** — Vercel (frontend hosting), Render (backend hosting), Aiven MySQL (database), GitHub Actions (build/test on push and PR).
+
+## Architecture
+
 ```
-├── api/controller → REST controllers (Auth, Post, Comment, Friendship, Message, Notification, etc.)
-├── api/model → JPA Entities (User, Post, Comment, Like, Message, etc.)
-├── api/dto → Data Transfer Objects (DTOs)
-├── service → Business logic (UserService, PostService, MessageService, etc.)
-├── repository → Spring Data JPA repositories
-├── configuration → SecurityConfig, WebSocket, PasswordPolicy, etc.
-├── util → JwtUtil, AuthHelper, GlobalExceptionHandler, ActiveChatTracker
-└── mapper → DTO Mappers (e.g., PostMapper, UserMapper)
+React (frontend)
+   │  REST over fetch (JWT in Authorization header)
+   ▼
+Spring Boot (backend) ──► Cloudinary (media storage)
+   │
+   ▼
+MySQL (schema managed by Flyway)
+
+React (frontend) ◄──── STOMP over WebSocket ────► Spring Boot (backend)
 ```
 
----
+**Frontend** — React with context-based state (no Redux), a centralized `fetchWithAuth` helper for authenticated requests, and a dedicated WebSocket/STOMP client.
 
-## 🔐 Security Highlights
+**Backend** — Controller → service → repository layering, Spring Security for authentication, JPA/MySQL with the schema versioned through Flyway, and Cloudinary for media storage.
 
-- **Password Encryption** – all user passwords are hashed using **BCrypt** before being stored.  
-- **JWT Authentication** – each request is validated with a JWT token in the `Authorization` header.  
-- **WebSocket Security** – JWT validation integrated with STOMP channels (`JwtChannelInterceptor`).  
-- **CORS Configuration** – secure cross-origin requests via `WebConfig`.  
+## Security
 
----
+Security-related implementation includes:
 
-## ⚡ Getting Started
+- BCrypt password hashing
+- JWT authentication for protected API requests
+- Token invalidation on password change (fingerprint-based)
+- Authenticated identity is taken from the security context for protected mutations, with ownership checks on posts, comments, likes, friendships and profile actions.
+- Authenticated, per-user STOMP/WebSocket access
+- Hashed, expiring, single-use password reset tokens
+- Image upload validation (content type, decode check, size limits)
+- Backend-enforced demo account restrictions, with rate limiting on demo login and demo API calls
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/kbackend.git
-   cd kbackend
-## Configure application.properties
+## Demo Mode
+
+The demo account is a single shared user, seeded on the backend and reachable only via `/auth/demo` (no password required). Tokens are short-lived (15 minutes) and rate-limited per IP.
+
+Read access — feed, profiles, search, notifications, stories — works normally. Write actions (posting, liking, commenting, friending, profile edits, uploads) and chat are blocked; chat is blocked at the WebSocket layer, since a demo session never opens a STOMP connection.
+
+Most demo content (posts, comments, likes, friends, chat threads, notifications) is real seeded data. Stories and the gallery use static bundled assets instead.
+
+## Running Locally
+
+### Backend
+Requirements: Java 17, Maven (or the included wrapper), a MySQL instance.
+
+```bash
+git clone https://github.com/danielgino/Faceboard-backend.git
+cd Faceboard-backend
+# set the environment variables listed below, pointing DB_URL at your local MySQL instance
+./mvnw spring-boot:run      # on Windows: mvnw.cmd spring-boot:run
 ```
-spring.datasource.url=jdbc:postgresql://localhost:5432/socialdb
-spring.datasource.username=your_db_user
-spring.datasource.password=your_db_password
 
-cloudinary.api_key=xxxx
-cloudinary.api_secret=xxxx
-cloudinary.cloud_name=xxxx
+### Frontend
+Requirements: Node.js and npm.
 
-jwt.secret=yourSuperSecretKey
+```bash
+git clone https://github.com/danielgino/Faceboard-frontend.git
+cd Faceboard-frontend
+npm install
+# set REACT_APP_API_URL and REACT_APP_WS_URL to point at your local backend
+npm start
 ```
-## Run the application
+
+## Environment Variables
+
+| Variable | Purpose |
+|---|---|
+| `DB_URL` | JDBC URL for the MySQL database |
+| `DB_USERNAME` | Database username |
+| `DB_PASSWORD` | Database password |
+| `JWT_SECRET` | Secret used to sign/verify JWTs (required — the app won't start without it) |
+| `CLOUDINARY_NAME` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+| `SMTP_EMAIL` | Sender address for password-reset emails |
+| `SMTP_PASSWORD` | SMTP credentials for the mail account above |
+| `DEMO_MODE_ENABLED` | Turns the public demo account on/off |
+| `FACEBOARD_CREATOR_USER_ID` | User ID used to reserve a slot in friend suggestions |
+| `FRONTEND_BASE_URL` | Frontend base URL used when generating application links (e.g. password reset links) |
+| `PORT` | Port the server listens on (optional, defaults to 8080) |
+| `REACT_APP_API_URL` | Frontend: base URL of the backend REST API |
+| `REACT_APP_WS_URL` | Frontend: WebSocket URL of the backend (`/ws` endpoint) |
+
+## Testing and CI
+
+**Backend** — Tests cover authentication, demo-mode restrictions, upload validation, password reset, and friendship logic. CI runs the suite against a real MySQL instance.
+
+**Frontend** — Jest and React Testing Library cover contexts, hooks, utilities, demo-mode behavior, and chat/WebSocket handling. No end-to-end tests (no Cypress/Playwright).
+
+**GitHub Actions** — Builds and tests run on every push and pull request to `main` for both repos, including a production build. Render and Vercel deploy separately through their own Git integration.
+
+## Deployment
+
+- Frontend: Vercel
+- Backend: Render
+- Database: Aiven MySQL
+- Media: Cloudinary
+
+## Project Structure
+
+Backend (`src/main/java/.../apimywebsite`):
 ```
-mvn spring-boot:run
+controller/       REST controllers
+service/          Business logic
+repository/       Spring Data JPA repositories
+model/            JPA entities
+dto/              Request/response DTOs
+mapper/           MapStruct mappers between entities and DTOs
+configuration/    Security, WebSocket, password policy config
+util/             JWT utilities, demo-mode enforcement, exception handling, rate limiting
 ```
+
+Frontend (`src/`):
+```
+pages/            Route-level page components
+components/       Reusable and domain components (posts, profile, chat, etc.)
+context/          Auth, friendship, chat, notification, story providers
+hooks/            Custom hooks (search debounce, suggestions, safety tip, etc.)
+service/          WebSocket message handling
+utils/            fetchWithAuth, validation, shared constants
+```
+
+## Author
+
+Built by Daniel Gino as a portfolio/learning project.
+
+- [LinkedIn](https://www.linkedin.com/in/daniel-gino-2b6350345/)
+- [GitHub](https://github.com/danielgino)
+- [Facebook](https://www.facebook.com/Daniegino)
+- [Instagram](https://www.instagram.com/daniel_gino)
